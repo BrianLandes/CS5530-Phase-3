@@ -12172,11 +12172,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Downloads\\LMS_handout\\LMS_handout\\LMS\\LMS.csproj",
+      "projectUniqueName": "C:\\Users\\Brian\\source\\repos\\CS5530-Phase-3\\LMS\\LMS.csproj",
       "projectName": "LMS",
-      "projectPath": "C:\\Downloads\\LMS_handout\\LMS_handout\\LMS\\LMS.csproj",
+      "projectPath": "C:\\Users\\Brian\\source\\repos\\CS5530-Phase-3\\LMS\\LMS.csproj",
       "packagesPath": "C:\\Users\\Brian\\.nuget\\packages\\",
-      "outputPath": "C:\\Downloads\\LMS_handout\\LMS_handout\\LMS\\obj\\",
+      "outputPath": "C:\\Users\\Brian\\source\\repos\\CS5530-Phase-3\\LMS\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
