@@ -14,6 +14,7 @@ using Microsoft.Extensions.Options;
 using LMS.Models;
 using LMS.Models.AccountViewModels;
 using LMS.Services;
+using LMS.Models.LMSModels;
 
 namespace LMS.Controllers {
 	[Authorize]
@@ -416,10 +417,73 @@ namespace LMS.Controllers {
 		/// <param name="lName">Last Name</param>
 		/// <param name="DOB">Date of Birth</param>
 		/// <param name="SubjectAbbrev">The department the user belongs to (professors and students only)</param>
-		/// <param name="SubjectAbbrev">The user's role: one of "Administrator", "Professor", "Student"</param> 
+		/// <param name="role">The user's role: one of "Administrator", "Professor", "Student"</param> 
 		/// <returns>A unique uID that is not be used by anyone else</returns>
 		public string CreateNewUser(string fName, string lName, DateTime DOB, string SubjectAbbrev, string role) {
-			return "";
+
+			//insert into the correct table
+			if (role == "Administrator") {
+				//set up admin object
+				Administrators admin = new Administrators {
+					FirstName = fName,
+					LastName = lName,
+					Dob = DOB
+				};
+
+				db.Administrators.Add(admin);
+				db.SaveChanges();
+
+				//get the uID and return it
+				var query =
+					from a in db.Administrators
+					where a.FirstName == fName
+					&& a.LastName == lName
+					&& a.Dob == DOB
+					select a.UId;
+				return query.ToString();
+			}
+			else if (role == "Professor") {
+				Professors professors = new Professors {
+					FirstName = fName,
+					LastName = lName,
+					Dob = DOB,
+					WorksIn = SubjectAbbrev
+				};
+				db.Professors.Add(professors);
+				db.SaveChanges();
+
+				//get the uID and return it
+				var query =
+					from p in db.Professors
+					where p.FirstName == fName
+					&& p.LastName == lName
+					&& p.Dob == DOB
+					&& p.WorksIn == SubjectAbbrev
+					select p.UId;
+				return query.ToString();
+			}
+			else {
+				Students student = new Students {
+					FirstName = fName,
+					LastName = lName,
+					Dob = DOB,
+					Major = SubjectAbbrev
+				};
+
+				db.Students.Add(student);
+				db.SaveChanges();
+
+				//get the uID and return it
+				var query =
+					from s in db.Students
+					where s.FirstName == fName
+					&& s.LastName == lName
+					&& s.Dob == DOB
+					&& s.Major == SubjectAbbrev
+					select s.UId;
+				return query.ToString();
+			}
+			//return "";
 		}
 
 		/*******End code to modify********/
