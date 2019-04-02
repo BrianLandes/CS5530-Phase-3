@@ -421,69 +421,96 @@ namespace LMS.Controllers {
 		/// <returns>A unique uID that is not be used by anyone else</returns>
 		public string CreateNewUser(string fName, string lName, DateTime DOB, string SubjectAbbrev, string role) {
 
+			// choose a unique id
+			// by getting all ids used by professors, students, and admins
+			// using two unions
+			var allUids = (from professor in db.Professors
+						select professor.UId)
+						.Union(
+						(from student in db.Students
+						select student.UId)
+						).Union(
+						(from administrator in db.Administrators
+						 select administrator.UId)
+						);
+			// sort the list just to get the 'biggest' one
+			var idList = new List<string>(allUids.ToArray());
+			idList.Sort();
+			string largestCurrentid = idList.LastOrDefault();
+			string newUnusedId = "u0000001";
+			if ( largestCurrentid != null ) {
+				int idNumber = Int32.Parse(largestCurrentid.Substring(1));
+				idNumber += 1;
+				// take the new, unused number and format it so that its a 'u' followed by 6 digits
+				newUnusedId = string.Format("u{0:0000000}", idNumber);
+			}
+
 			//insert into the correct table
 			if (role == "Administrator") {
 				//set up admin object
 				Administrators admin = new Administrators {
 					FirstName = fName,
 					LastName = lName,
-					Dob = DOB
+					Dob = DOB,
+					UId = newUnusedId
 				};
 
 				db.Administrators.Add(admin);
 				db.SaveChanges();
 
-				//get the uID and return it
-				var query =
-					from a in db.Administrators
-					where a.FirstName == fName
-					&& a.LastName == lName
-					&& a.Dob == DOB
-					select a.UId;
-				return query.ToString();
+				////get the uID and return it
+				//var query =
+				//	from a in db.Administrators
+				//	where a.FirstName == fName
+				//	&& a.LastName == lName
+				//	&& a.Dob == DOB
+				//	select a.UId;
+				//return query.ToString();
 			}
 			else if (role == "Professor") {
 				Professors professors = new Professors {
 					FirstName = fName,
 					LastName = lName,
 					Dob = DOB,
-					WorksIn = SubjectAbbrev
+					WorksIn = SubjectAbbrev,
+					UId = newUnusedId
 				};
 				db.Professors.Add(professors);
 				db.SaveChanges();
 
-				//get the uID and return it
-				var query =
-					from p in db.Professors
-					where p.FirstName == fName
-					&& p.LastName == lName
-					&& p.Dob == DOB
-					&& p.WorksIn == SubjectAbbrev
-					select p.UId;
-				return query.ToString();
+				////get the uID and return it
+				//var query =
+				//	from p in db.Professors
+				//	where p.FirstName == fName
+				//	&& p.LastName == lName
+				//	&& p.Dob == DOB
+				//	&& p.WorksIn == SubjectAbbrev
+				//	select p.UId;
+				//return query.ToString();
 			}
 			else {
 				Students student = new Students {
 					FirstName = fName,
 					LastName = lName,
 					Dob = DOB,
-					Major = SubjectAbbrev
+					Major = SubjectAbbrev,
+					UId = newUnusedId
 				};
 
 				db.Students.Add(student);
 				db.SaveChanges();
 
-				//get the uID and return it
-				var query =
-					from s in db.Students
-					where s.FirstName == fName
-					&& s.LastName == lName
-					&& s.Dob == DOB
-					&& s.Major == SubjectAbbrev
-					select s.UId;
-				return query.ToString();
+				////get the uID and return it
+				//var query =
+				//	from s in db.Students
+				//	where s.FirstName == fName
+				//	&& s.LastName == lName
+				//	&& s.Dob == DOB
+				//	&& s.Major == SubjectAbbrev
+				//	select s.UId;
+				//return query.ToString();
 			}
-			//return "";
+			return newUnusedId;
 		}
 
 		/*******End code to modify********/
