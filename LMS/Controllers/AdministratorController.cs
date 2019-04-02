@@ -34,8 +34,14 @@ namespace LMS.Controllers {
 		/// <param name="subject">The department subject abbreviation (as in "CS")</param>
 		/// <returns>The JSON result</returns>
 		public IActionResult GetCourses(string subject) {
-
-			return Json(null);
+			var query =
+				from c in db.Courses
+				where c.Listing == subject
+				select new {
+					number = c.Number,
+					name = c.Name
+				};
+			return Json(query.ToArray());
 		}
 
 
