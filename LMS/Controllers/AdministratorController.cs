@@ -58,8 +58,15 @@ namespace LMS.Controllers {
 		/// <param name="subject">The department subject abbreviation</param>
 		/// <returns>The JSON result</returns>
 		public IActionResult GetProfessors(string subject) {
-
-			return Json(null);
+			var query =
+				from p in db.Professors
+				where p.WorksIn == subject
+				select new {
+					lname = p.LastName,
+					fname = p.FirstName,
+					uid = p.UId
+				};
+			return Json(query.ToArray());
 		}
 
 

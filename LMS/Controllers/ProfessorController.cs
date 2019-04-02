@@ -227,8 +227,19 @@ namespace LMS.Controllers {
 		/// <param name="uid">The professor's uid</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetMyClasses(string uid) {
-
-			return Json(null);
+			var query =
+				from c in db.Classes 
+				join course in db.Courses
+				on c.CatalogId equals course.CatalogId
+				select new {
+					subject = course.Listing,
+					number = course.Number,
+					name = course.Name,
+					season = c.SemesterSeason,
+					year = c.SemesterYear
+					
+				};
+			return Json(query.ToArray());
 		}
 
 
