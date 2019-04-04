@@ -66,8 +66,20 @@ namespace LMS.Controllers {
 		/// </summary>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetCatalog() {
-
-			return Json(null);
+			var query =
+				from d in db.Departments
+				join c in db.Courses
+				on d.Subject equals c.Listing
+				select new {
+					subject = d.Subject,
+					dname = d.Name,
+					courses = from c2 in db.Courses
+							  select new {
+								  number = c2.Number,
+								  cname = c2.Name
+							  }
+				};
+			return Json(query.ToArray());
 		}
 
 		/// <summary>
@@ -85,8 +97,24 @@ namespace LMS.Controllers {
 		/// <param name="number">The course number, as in 5530</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetClassOfferings(string subject, int number) {
-
-			return Json(null);
+			var query =
+				from c in db.Classes
+				join c2 in db.Courses
+				on c.CatalogId equals c2.CatalogId
+				join p in db.Professors
+				on c.Teacher equals p.UId
+				where c2.Listing == subject
+				&& c2.Number == number.ToString()
+				select new {
+					season = c.SemesterSeason,
+					year = c.SemesterYear,
+					location = c.Location,
+					start = c.StartTime,
+					end = c.EndTime,
+					fname= p.FirstName,
+					lname = p.LastName
+				};
+			return Json(query.ToArray());
 		}
 
 		/// <summary>
