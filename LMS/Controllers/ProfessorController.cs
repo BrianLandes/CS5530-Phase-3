@@ -94,8 +94,36 @@ namespace LMS.Controllers {
 		/// <param name="year">The year part of the semester for the class the assignment belongs to</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetStudentsInClass(string subject, int num, string season, int year) {
-
-			return Json(null);
+			var query =
+				from c in db.Courses
+				join c2 in db.Classes
+				on c.CatalogId equals c2.CatalogId
+				join e in db.Enrolled
+				on c2.CId equals e.CId
+				where c.Listing ==subject
+				&& c.Number == num.ToString()
+				&& c2.SemesterSeason == season
+				&& c2.SemesterYear == year
+				select new {
+					uid = e.UId
+				};
+			//JsonResult students= null;
+			//foreach (var uid in query) {
+				// go through every uid to find the info to return
+				var query2 =
+					from s in db.Students
+					join e in db.Enrolled
+					on s.UId equals e.UId
+					select new {
+						fname = s.FirstName,
+						lname = s.LastName,
+						uid = s.UId,
+						dob = s.Dob,
+						grade = e.Grade
+					};
+			//	students = new JsonResult(query2.ToArray());
+			//}
+			return Json(query2.ToArray());
 		}
 
 
