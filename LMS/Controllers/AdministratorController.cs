@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LMS.Controllers {
+	
 	[Authorize(Roles = "Administrator")]
 	public class AdministratorController : CommonController {
 		public IActionResult Index() {
@@ -82,8 +84,17 @@ namespace LMS.Controllers {
 		/// false if the course already exists, true otherwise.</returns>
 		public IActionResult CreateCourse(string subject, int number, string name) {
 
+			Courses newCourse = new Courses() {
+				Listing = subject,
+				Number = "" + number,
+				Name = name
+			};
+			db.Courses.Add(newCourse);
+			int rowsAffected = db.SaveChanges();
+			
+			// TODO: it will add duplicate courses still
 
-			return Json(new { success = false });
+			return Json(new { success = rowsAffected>0 });
 		}
 
 

@@ -17,3 +17,4 @@ C:\Users\Brian\source\repos\CS5530-Phase-3\xUnitTests\bin\Debug\netcoreapp2.2\LM
 C:\Users\Brian\source\repos\CS5530-Phase-3\xUnitTests\bin\Debug\netcoreapp2.2\LMS.dll
 C:\Users\Brian\source\repos\CS5530-Phase-3\xUnitTests\bin\Debug\netcoreapp2.2\LMS.pdb
 C:\Users\Brian\source\repos\CS5530-Phase-3\xUnitTests\obj\Debug\netcoreapp2.2\xUnitTests.csproj.CopyComplete
+C:\Users\Brian\source\repos\CS5530-Phase-3\xUnitTests\bin\Debug\netcoreapp2.2\https.pfx

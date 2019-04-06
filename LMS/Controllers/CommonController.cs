@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LMS.Controllers {
+
 	public class CommonController : Controller {
 
 		/*******Begin code to modify********/
