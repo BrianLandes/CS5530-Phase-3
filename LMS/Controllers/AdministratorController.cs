@@ -117,7 +117,36 @@ namespace LMS.Controllers {
 		/// true otherwise.</returns>
 		public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor) {
 
-			return Json(new { success = false });
+			// get the cID using subject and number
+			var query = from c in db.Courses
+						where c.Listing == subject
+						&& c.Number == number.ToString()
+						select c.CatalogId;
+
+			// check this
+			var queryCheck = from c2 in db.Classes
+							 where c2.CatalogId == query.ToString()
+							 select c2.CatalogId;
+			if(queryCheck.Count() > 0) {
+				return Json(new { success = false });
+			}
+
+			Classes newClass = new Classes() {
+				CatalogId = query.ToString(),
+				SemesterSeason = season,
+				SemesterYear = (ushort) year,
+				StartTime = start.TimeOfDay,
+				EndTime = end.TimeOfDay,
+				Location = location,
+				Teacher = instructor
+
+			};
+			db.Classes.Add(newClass);
+			int rowsAffected = db.SaveChanges();
+
+			// TODO: fix the return statement
+
+			return Json(new { success = rowsAffected > 0 });
 		}
 
 
