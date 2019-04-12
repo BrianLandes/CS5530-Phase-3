@@ -84,6 +84,16 @@ namespace LMS.Controllers {
 		/// false if the course already exists, true otherwise.</returns>
 		public IActionResult CreateCourse(string subject, int number, string name) {
 
+			var query = from course in db.Courses
+						where course.Listing == subject &&
+						course.Number == "" + number
+						select course;
+
+			// there already exists a course with that listing and number
+			if ( query.Any() ) {
+				return Json(new { success = false });
+			}
+
 			Courses newCourse = new Courses() {
 				Listing = subject,
 				Number = "" + number,
@@ -92,8 +102,6 @@ namespace LMS.Controllers {
 			db.Courses.Add(newCourse);
 			int rowsAffected = db.SaveChanges();
 			
-			// TODO: it will add duplicate courses still
-
 			return Json(new { success = rowsAffected>0 });
 		}
 
