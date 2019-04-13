@@ -174,11 +174,7 @@ namespace LMS.Controllers {
 		/// </returns>
 		public IActionResult GetUser(string uid) {
 
-			// TODO: test it all
-			// TODO: test it against a userid that doesn't exist
-			// TODO: test it against an administrator
-			// TODO: test it against a professor
-			// TODO: test it against a student
+			// TODO: test it when there's more than one user in the database
 
 			// we're only looking for one object
 			// lets just check one at a time whether they are in admins, students, or professors

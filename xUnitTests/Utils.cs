@@ -40,5 +40,13 @@ namespace xUnitTests {
 
 			return resultValue.GetType().GetProperty("success").GetValue(resultValue);
 		}
+
+		/// <summary>
+		/// Have to use this reflection detour because the controllers return
+		/// anonymous types, which the tests don't know the internals of, I guess?
+		/// </summary>
+		public static T GetValue<T>(dynamic resultValue, string propertyName) {
+			return (T)(resultValue.GetType().GetProperty(propertyName).GetValue(resultValue));
+		}
 	}
 }
