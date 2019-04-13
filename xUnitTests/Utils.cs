@@ -20,7 +20,7 @@ namespace xUnitTests {
 			// Add a department
 			Departments newDepartment = new Departments() {
 				Subject = "Computer Science",
-				Name = "CS"
+				Name = "CS",
 			};
 
 			db.Departments.Add(newDepartment);
