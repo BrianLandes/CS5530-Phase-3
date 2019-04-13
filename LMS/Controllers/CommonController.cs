@@ -112,7 +112,7 @@ namespace LMS.Controllers {
 					location = c.Location,
 					start = c.StartTime,
 					end = c.EndTime,
-					fname= p.FirstName,
+					fname = p.FirstName,
 					lname = p.LastName
 				};
 			return Json(query.ToArray());
@@ -174,6 +174,71 @@ namespace LMS.Controllers {
 		/// </returns>
 		public IActionResult GetUser(string uid) {
 
+			// TODO: test it all
+			// TODO: test it against a userid that doesn't exist
+			// TODO: test it against an administrator
+			// TODO: test it against a professor
+			// TODO: test it against a student
+
+			// we're only looking for one object
+			// lets just check one at a time whether they are in admins, students, or professors
+			// and return the first one we find
+
+			// Administrators
+			{
+				var query = 
+					from administrator in db.Administrators
+					where administrator.UId == uid
+					select new {
+						fname = administrator.FirstName,
+						lname = administrator.LastName,
+						uid = administrator.UId,
+						// leave off department
+					};
+				var theAdministrator = query.FirstOrDefault();
+				if ( theAdministrator!=null ) {
+					// found one
+					return Json(theAdministrator);
+				}
+			}
+
+			// Professor
+			{
+				var query =
+					from professor in db.Professors
+					where professor.UId == uid
+					select new {
+						fname = professor.FirstName,
+						lname = professor.LastName,
+						uid = professor.UId,
+						department = professor.WorksInNavigation.Name
+					};
+				var theProfessor = query.FirstOrDefault();
+				if (theProfessor != null) {
+					// found one
+					return Json(theProfessor);
+				}
+			}
+
+			// Student
+			{
+				var query =
+					from student in db.Students
+					where student.UId == uid
+					select new {
+						fname = student.FirstName,
+						lname = student.LastName,
+						uid = student.UId,
+						department = student.MajorNavigation.Name
+					};
+				var theStudent = query.FirstOrDefault();
+				if (theStudent != null) {
+					// found one
+					return Json(theStudent);
+				}
+			}
+
+			// didn't find one
 			return Json(new { success = false });
 		}
 
