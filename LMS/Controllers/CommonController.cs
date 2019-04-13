@@ -112,7 +112,7 @@ namespace LMS.Controllers {
 					location = c.Location,
 					start = c.StartTime,
 					end = c.EndTime,
-					fname= p.FirstName,
+					fname = p.FirstName,
 					lname = p.LastName
 				};
 			return Json(query.ToArray());
@@ -173,6 +173,29 @@ namespace LMS.Controllers {
 		/// or an object containing {success: false} if the user doesn't exist
 		/// </returns>
 		public IActionResult GetUser(string uid) {
+			var query = from masterTable in
+							(from a in db.Administrators
+							 where a.UId == uid
+							 select new {
+
+							 }
+
+
+							).Union(
+							from s in db.Students
+							where s.UId == uid
+							select new {
+
+							}).Union(
+						    from p in db.Professors
+							where p.UId == uid
+							select new {
+							})
+						select new {
+							fname = masterTable
+						};
+
+
 
 			return Json(new { success = false });
 		}
