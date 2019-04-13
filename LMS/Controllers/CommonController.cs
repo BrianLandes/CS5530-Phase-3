@@ -173,30 +173,72 @@ namespace LMS.Controllers {
 		/// or an object containing {success: false} if the user doesn't exist
 		/// </returns>
 		public IActionResult GetUser(string uid) {
-			var query = from masterTable in
-							(from a in db.Administrators
-							 where a.UId == uid
-							 select new {
 
-							 }
+			// TODO: test it all
+			// TODO: test it against a userid that doesn't exist
+			// TODO: test it against an administrator
+			// TODO: test it against a professor
+			// TODO: test it against a student
 
+			// we're only looking for one object
+			// lets just check one at a time whether they are in admins, students, or professors
+			// and return the first one we find
 
-							).Union(
-							from s in db.Students
-							where s.UId == uid
-							select new {
+			// Administrators
+			{
+				var query = 
+					from administrator in db.Administrators
+					where administrator.UId == uid
+					select new {
+						fname = administrator.FirstName,
+						lname = administrator.LastName,
+						uid = administrator.UId,
+						// leave off department
+					};
+				var theAdministrator = query.FirstOrDefault();
+				if ( theAdministrator!=null ) {
+					// found one
+					return Json(theAdministrator);
+				}
+			}
 
-							}).Union(
-						    from p in db.Professors
-							where p.UId == uid
-							select new {
-							})
-						select new {
-							fname = masterTable
-						};
+			// Professor
+			{
+				var query =
+					from professor in db.Professors
+					where professor.UId == uid
+					select new {
+						fname = professor.FirstName,
+						lname = professor.LastName,
+						uid = professor.UId,
+						department = professor.WorksInNavigation.Name
+					};
+				var theProfessor = query.FirstOrDefault();
+				if (theProfessor != null) {
+					// found one
+					return Json(theProfessor);
+				}
+			}
 
+			// Student
+			{
+				var query =
+					from student in db.Students
+					where student.UId == uid
+					select new {
+						fname = student.FirstName,
+						lname = student.LastName,
+						uid = student.UId,
+						department = student.MajorNavigation.Name
+					};
+				var theStudent = query.FirstOrDefault();
+				if (theStudent != null) {
+					// found one
+					return Json(theStudent);
+				}
+			}
 
-
+			// didn't find one
 			return Json(new { success = false });
 		}
 

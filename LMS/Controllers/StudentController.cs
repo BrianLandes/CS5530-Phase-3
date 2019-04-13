@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -95,7 +96,39 @@ namespace LMS.Controllers {
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid) {
 
-			return Json(null);
+			// TODO: test it at all
+			// TODO: test it against a student with no assignments
+			// TODO: test it against a student with one assignment
+			// TODO: test it against a student with one assignment where other students and other assignments exist
+			// TODO: test it against a student with multiple assignments
+			// TODO: test it against a student with multiple assignments where other students and other assignments exist
+
+			// course subject <-> course CatalogId
+
+			var query =
+				from enrollment in db.Enrolled
+				where enrollment.UId == uid
+				from c in db.Classes
+				where c.CId == enrollment.CId
+				&& c.CatalogId == subject
+				&& Int32.Parse(c.Catalog.Number) == num
+				&& c.SemesterSeason == season
+				&& c.SemesterYear == year
+				from assCat in db.AssignmentCategories
+				where assCat.CId == c.CId
+				from assignment in db.Assignments
+				where assignment.AcId == assCat.AcId
+				from submission in db.Submissions.DefaultIfEmpty()
+				where submission.UId == uid
+				&& submission.AId == assignment.AId
+				select new {
+					aname = assignment.Name,
+					cname = assCat.Name,
+					due = assignment.DueDate,
+					score = submission == null? null : (uint?)submission.Score
+				};
+
+			return Json(query.ToArray());
 		}
 
 
@@ -120,7 +153,64 @@ namespace LMS.Controllers {
 		public IActionResult SubmitAssignmentText(string subject, int num, string season, int year,
 		  string category, string asgname, string uid, string contents) {
 
-			return Json(new { success = false });
+			// TODO: test it at all
+			// TODO: test it against a typical, successful case
+			// TODO: test it against a resubmission
+
+			// course subject <-> course CatalogId
+
+			// get the assignment id
+			var query =
+				from enrollment in db.Enrolled
+				where enrollment.UId == uid
+				from c in db.Classes
+				where c.CId == enrollment.CId
+				&& c.CatalogId == subject
+				&& Int32.Parse(c.Catalog.Number) == num
+				&& c.SemesterSeason == season
+				&& c.SemesterYear == year
+				from assCat in db.AssignmentCategories
+				where assCat.CId == c.CId
+				&& assCat.Name == category
+				from assignment in db.Assignments
+				where assignment.AcId == assCat.AcId
+				&& assignment.Name == asgname
+				select assignment;
+
+			var assignmentInfo = query.FirstOrDefault();
+			if ( assignmentInfo==null ) {
+				return Json(new { success = false });
+			}
+
+			// check to see if this is a re-submission
+			var resubmissionQuery =
+				from submission in db.Submissions
+				where submission.UId == uid
+				&& submission.AId == assignmentInfo.AId
+				select submission;
+
+			var resubmission = resubmissionQuery.FirstOrDefault();
+			if (resubmission != null) {
+				// there is already a submission for this assignment -> update the existing one
+				resubmission.Content = contents;
+				resubmission.Time = DateTime.Now;
+				int rowsAffected = db.SaveChanges();
+				return Json(new { success = rowsAffected > 0 });
+			} else {
+				// there is no previous submission -> create a new one
+
+				var newSubmission = new Submissions {
+					UId = uid,
+					AId = assignmentInfo.AId,
+					Time = DateTime.Now,
+					Content = contents,
+					Score = 0
+				};
+				db.Submissions.Add(newSubmission);
+				int rowsAffected = db.SaveChanges();
+
+				return Json(new { success = rowsAffected>0 });
+			}
 		}
 
 
@@ -136,7 +226,52 @@ namespace LMS.Controllers {
 		/// false if the student is already enrolled in the class, true otherwise.</returns>
 		public IActionResult Enroll(string subject, int num, string season, int year, string uid) {
 
-			return Json(new { success = false });
+			// TODO: test it at all
+			// TODO: test it against a successful, typical case
+			// TODO: test it when the student is already enrolled in the class
+			// TODO: test it against a class that doesn't exist
+
+			// get the class
+			var classQuery =
+				from c in db.Classes
+				where c.CatalogId == subject
+				&& Int32.Parse(c.Catalog.Number) == num
+				&& c.SemesterSeason == season
+				&& c.SemesterYear == year
+				select c;
+
+			// check if the student is already enrolled
+			{
+				var query =
+					from enrollment in db.Enrolled
+					where enrollment.UId == uid
+					from c in classQuery
+					where c.CId == enrollment.CId
+					select enrollment;
+
+				var enrollmentInfo = query.FirstOrDefault();
+				if (enrollmentInfo != null) {
+					// already enrolled
+					return Json(new { success = false });
+				}
+			}// end of check if the student is already enrolled
+
+			var theClass = classQuery.FirstOrDefault();
+			if ( theClass == null ) {
+				// the class doesn't exist
+				return Json(new { success = false });
+			}
+
+			var newEnrollment = new Enrolled {
+				UId = uid,
+				CId = theClass.CId,
+				Grade = "--"
+			};
+
+			db.Enrolled.Add(newEnrollment);
+			int rowsAffected = db.SaveChanges();
+
+			return Json(new { success = rowsAffected > 0 });
 		}
 
 
@@ -154,7 +289,54 @@ namespace LMS.Controllers {
 		/// <returns>A JSON object containing a single field called "gpa" with the number value</returns>
 		public IActionResult GetGPA(string uid) {
 
-			return Json(null);
+			// TODO: test it at all
+			// TODO: test against a student that is not enrolled in any classes
+			// TODO: test against a student that is enrolled in classes, but has no grades
+			// TODO: test against a student that is enrolled in a class, has a grade, and should get a 4.0
+			// TODO: test against a student that is enrolled in multiple classes, has grades, and should get a 4.0
+			// TODO: test against a student that is enrolled in multiple classes, has grades, and should get a 3.3 etc
+
+			var query =
+				from enrollment in db.Enrolled
+				where enrollment.UId == uid
+				select enrollment;
+
+			if ( query.FirstOrDefault() == null ) {
+				// this student is not enrolled in any classes
+				return Json(new { gpa = 0.0f });
+			}
+
+			float creditCount = 0;
+			float totalCredits = 0;
+
+			foreach( var enrollment in query ) {
+				if ( enrollment.Grade == "--" || string.IsNullOrEmpty(enrollment.Grade) ) {
+					// ignore
+					continue;
+				}
+				totalCredits += 4;
+				creditCount += GradeToGradePoint(enrollment.Grade);
+			}
+
+			return Json(new { gpa = creditCount/ totalCredits });
+		}
+
+		private float GradeToGradePoint(string grade) {
+			switch( grade ) {
+				case "A": return 4f;
+				case "A-": return 3.7f;
+				case "B+": return 3.3f;
+				case "B": return 3.0f;
+				case "B-": return 2.7f;
+				case "C+": return 2.3f;
+				case "C": return 2.0f;
+				case "C-": return 1.7f;
+				case "D+": return 1.3f;
+				case "D": return 1.0f;
+				case "D-": return 0.7f;
+				case "E": return 0.0f;
+				default: return 0.0f;
+			}
 		}
 
 		/*******End code to modify********/
