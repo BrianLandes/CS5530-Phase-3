@@ -75,6 +75,7 @@ namespace LMS.Controllers {
 					subject = d.Subject,
 					dname = d.Name,
 					courses = from c2 in db.Courses
+							  where c2.Listing == d.Subject
 							  select new {
 								  number = c2.Number,
 								  cname = c2.Name

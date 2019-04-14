@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using LMS.Models.LMSModels;
 
 namespace LMS.Controllers {
 	[Authorize(Roles = "Professor")]
@@ -100,30 +101,21 @@ namespace LMS.Controllers {
 				on c.CatalogId equals c2.CatalogId
 				join e in db.Enrolled
 				on c2.CId equals e.CId
-				where c.Listing ==subject
+				join s in db.Students
+				on e.UId equals s.UId
+				where c.Listing == subject
 				&& c.Number == num.ToString()
 				&& c2.SemesterSeason == season
 				&& c2.SemesterYear == year
 				select new {
-					uid = e.UId
+					fname = s.FirstName,
+					lname = s.LastName,
+					uid = s.UId,
+					dob = s.Dob.Date,
+					grade = e.Grade
 				};
-			//JsonResult students= null;
-			//foreach (var uid in query) {
-				// go through every uid to find the info to return
-				var query2 =
-					from s in db.Students
-					join e in db.Enrolled
-					on s.UId equals e.UId
-					select new {
-						fname = s.FirstName,
-						lname = s.LastName,
-						uid = s.UId,
-						dob = s.Dob,
-						grade = e.Grade
-					};
-			//	students = new JsonResult(query2.ToArray());
-			//}
-			return Json(query2.ToArray());
+
+			return Json(query.ToArray());
 		}
 
 
@@ -145,6 +137,24 @@ namespace LMS.Controllers {
 		/// or null to return assignments from all categories</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category) {
+			var query = from c in db.Courses
+						join c2 in db.Classes
+						on c.CatalogId equals c2.CatalogId
+						join ac in db.AssignmentCategories
+						on c2.CId equals ac.CId
+						join a in db.Assignments
+						on ac.AcId equals a.AcId
+						where c.Listing == subject
+						&& c.Number == num.ToString()
+						&& c2.SemesterSeason == season
+						&& c2.SemesterYear == year
+						&& ac.Name == category
+						select new {
+							aname = a.Name,
+							cname = ac.Name,
+							due = a.DueDate,
+							//Submissions =
+						};
 
 			return Json(null);
 		}
@@ -163,8 +173,21 @@ namespace LMS.Controllers {
 		/// <param name="category">The name of the assignment category in the class</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentCategories(string subject, int num, string season, int year) {
+			var query = from c in db.Courses
+						join c2 in db.Classes
+						on c.CatalogId equals c2.CatalogId
+						join ac in db.AssignmentCategories
+						on c2.CId equals ac.CId
+						where c.Listing == subject
+						&& c.Number == num.ToString()
+						&& c2.SemesterSeason == season
+						&& c2.SemesterYear == year
+						select new {
+							name = ac.Name,
+							weight = ac.GradingWeight
+						};
 
-			return Json(null);
+			return Json(query.ToArray());
 		}
 
 		/// <summary>
@@ -180,7 +203,24 @@ namespace LMS.Controllers {
 		/// <returns>A JSON object containing {success = true/false} </returns>
 		public IActionResult CreateAssignmentCategory(string subject, int num, string season, int year, string category, int catweight) {
 
-			return Json(new { success = false });
+			var query = from c in db.Courses
+						join c2 in db.Classes
+						on c.CatalogId equals c2.CatalogId
+						where c.Listing == subject
+						&& c.Number == num.ToString()
+						&& c2.SemesterSeason == season
+						&& c2.SemesterYear == year
+						select c2.CId;
+			AssignmentCategories newAC = new AssignmentCategories() {
+				Name = category,
+				GradingWeight = (uint)catweight,
+				CId = query.FirstOrDefault()
+			};
+
+			db.AssignmentCategories.Add(newAC);
+			int rowsAffected = db.SaveChanges();
+
+			return Json(new { success = rowsAffected > 0 });
 		}
 
 		/// <summary>
@@ -220,8 +260,33 @@ namespace LMS.Controllers {
 		/// <param name="asgname">The name of the assignment</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetSubmissionsToAssignment(string subject, int num, string season, int year, string category, string asgname) {
+			var query = from c in db.Courses
+						join c2 in db.Classes
+						on c.CatalogId equals c2.CatalogId
+						join ac in db.AssignmentCategories
+						on c2.CId equals ac.CId
+						join a in db.Assignments
+						on ac.AcId equals a.AcId
+						join s in db.Submissions
+						on a.AId equals s.AId
+						join s2 in db.Students
+						on s.UId equals s2.UId
 
-			return Json(null);
+						where c.Listing == subject
+						&& c.Number == num.ToString()
+						&& c2.SemesterSeason == season
+						&& c2.SemesterYear == year
+						&& ac.Name == category
+						&& a.Name == asgname
+						select new {
+							fname = s2.FirstName,
+							lname = s2.LastName,
+							uid = s2.UId,
+							time = s.Time,
+							score = s.Score
+						};
+
+			return Json(query.ToArray());
 		}
 
 
@@ -256,16 +321,17 @@ namespace LMS.Controllers {
 		/// <returns>The JSON array</returns>
 		public IActionResult GetMyClasses(string uid) {
 			var query =
-				from c in db.Classes 
+				from c in db.Classes
 				join course in db.Courses
 				on c.CatalogId equals course.CatalogId
+				where c.Teacher == uid
 				select new {
 					subject = course.Listing,
 					number = course.Number,
 					name = course.Name,
 					season = c.SemesterSeason,
 					year = c.SemesterYear
-					
+
 				};
 			return Json(query.ToArray());
 		}
