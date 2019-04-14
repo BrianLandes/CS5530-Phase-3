@@ -137,26 +137,51 @@ namespace LMS.Controllers {
 		/// or null to return assignments from all categories</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category) {
-			var query = from c in db.Courses
-						join c2 in db.Classes
-						on c.CatalogId equals c2.CatalogId
-						join ac in db.AssignmentCategories
-						on c2.CId equals ac.CId
-						join a in db.Assignments
-						on ac.AcId equals a.AcId
-						where c.Listing == subject
-						&& c.Number == num.ToString()
-						&& c2.SemesterSeason == season
-						&& c2.SemesterYear == year
-						&& ac.Name == category
-						select new {
-							aname = a.Name,
-							cname = ac.Name,
-							due = a.DueDate,
-							//Submissions =
-						};
-
-			return Json(null);
+			//better way to do this??
+			if (category == null) {
+				var query = from c in db.Courses
+							join c2 in db.Classes
+							on c.CatalogId equals c2.CatalogId
+							join ac in db.AssignmentCategories
+							on c2.CId equals ac.CId
+							join a in db.Assignments
+							on ac.AcId equals a.AcId
+							where c.Listing == subject
+							&& c.Number == num.ToString()
+							&& c2.SemesterSeason == season
+							&& c2.SemesterYear == year
+							//&& ac.Name == category
+							select new {
+								aname = a.Name,
+								cname = ac.Name,
+								due = a.DueDate,
+								// fix this
+								Submissions = 1
+							};
+				return Json(query.ToArray());
+			}
+			else {
+				var query = from c in db.Courses
+							join c2 in db.Classes
+							on c.CatalogId equals c2.CatalogId
+							join ac in db.AssignmentCategories
+							on c2.CId equals ac.CId
+							join a in db.Assignments
+							on ac.AcId equals a.AcId
+							where c.Listing == subject
+							&& c.Number == num.ToString()
+							&& c2.SemesterSeason == season
+							&& c2.SemesterYear == year
+							&& ac.Name == category
+							select new {
+								aname = a.Name,
+								cname = ac.Name,
+								due = a.DueDate,
+								// fix this
+								Submissions = 1
+							};
+				return Json(query.ToArray());
+			}
 		}
 
 
@@ -237,8 +262,29 @@ namespace LMS.Controllers {
 		/// <param name="asgcontents">The contents of the new assignment</param>
 		/// <returns>A JSON object containing success = true/false</returns>
 		public IActionResult CreateAssignment(string subject, int num, string season, int year, string category, string asgname, int asgpoints, DateTime asgdue, string asgcontents) {
+			var query = from c in db.Courses
+						join c2 in db.Classes
+						on c.CatalogId equals c2.CatalogId
+						join a in db.AssignmentCategories
+						on c2.CId equals a.CId
+						where c.Listing == subject
+						&& c.Number == num.ToString()
+						&& c2.SemesterSeason == season
+						&& c2.SemesterYear == year
+						&& a.Name == category
+						select a.AcId;
+			Assignments newAssignment = new Assignments() {
+				AcId = query.FirstOrDefault(),
+				Name = asgname,
+				MaxPointValue = (uint) asgpoints,
+				DueDate = asgdue,
+				Content = asgcontents
+			};
 
-			return Json(new { success = false });
+			db.Assignments.Add(newAssignment);
+			int rowsAffected = db.SaveChanges();
+
+			return Json(new { success = rowsAffected > 0 });
 		}
 
 

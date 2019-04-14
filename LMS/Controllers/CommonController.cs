@@ -132,8 +132,21 @@ namespace LMS.Controllers {
 		/// <param name="asgname">The name of the assignment in the category</param>
 		/// <returns>The assignment contents</returns>
 		public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname) {
-
-			return Content("");
+			var query = from c in db.Courses
+						join c2 in db.Classes
+						on c.CatalogId equals c2.CatalogId
+						join ac in db.AssignmentCategories
+						on c2.CId equals ac.CId
+						join a in db.Assignments
+						on ac.AcId equals a.AcId
+						where c.Listing == subject
+						&& c.Number == num.ToString()
+						&& c2.SemesterSeason == season
+						&& c2.SemesterYear == year
+						&& ac.Name == category
+						&& a.Name == asgname
+						select a.Content;
+			return Content(query.First());
 		}
 
 
@@ -152,8 +165,27 @@ namespace LMS.Controllers {
 		/// <param name="uid">The uid of the student who submitted it</param>
 		/// <returns>The submission text</returns>
 		public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid) {
+			var query = from c in db.Courses
+						join c2 in db.Classes
+						on c.CatalogId equals c2.CatalogId
+						join ac in db.AssignmentCategories
+						on c2.CId equals ac.CId
+						join a in db.Assignments
+						on ac.AcId equals a.AcId
+						join s in db.Submissions
+						on a.AId equals s.AId
+						join s2 in db.Students
+						on s.UId equals s2.UId
 
-			return Content("");
+						where c.Listing == subject
+						&& c.Number == num.ToString()
+						&& c2.SemesterSeason == season
+						&& c2.SemesterYear == year
+						&& ac.Name == category
+						&& a.Name == asgname
+						&& s.UId == uid
+						select s.Content;
+			return Content(query.First());
 		}
 
 
