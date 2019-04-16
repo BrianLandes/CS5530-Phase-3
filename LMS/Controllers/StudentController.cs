@@ -95,6 +95,7 @@ namespace LMS.Controllers {
 		/// <param name="uid"></param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid) {
+			//what to do if there are no submissions? 
 
 			// TODO: test it at all
 			// TODO: test it against a student with no assignments
@@ -102,53 +103,29 @@ namespace LMS.Controllers {
 			// TODO: test it against a student with one assignment where other students and other assignments exist
 			// TODO: test it against a student with multiple assignments
 			// TODO: test it against a student with multiple assignments where other students and other assignments exist
-
 			var query = from c in db.Courses
 						join c2 in db.Classes
 						on c.CatalogId equals c2.CatalogId
-						join e in db.Enrolled
-						on c2.CId equals e.CId
 						join ac in db.AssignmentCategories
 						on c2.CId equals ac.CId
 						join a in db.Assignments
 						on ac.AcId equals a.AcId
-						join s2 in db.Submissions
-						on a.AId equals s2.AId
 						where c.Listing == subject
 						&& c.Number == num.ToString()
 						&& c2.SemesterSeason == season
 						&& c2.SemesterYear == year
-						&& e.UId == uid
 						select new {
 							aname = a.Name,
 							cname = ac.Name,
 							due = a.DueDate,
-							//score =1
-							score = s2 == null? null : (uint?) s2.Score
+							// problems getting the score
+							score = 1
+							//score = from s in db.Submissions.DefaultIfEmpty()
+							//		where a.AId == s.AId &&
+							//		s.UId == uid
+							//		select s.Score
+							//score = s == null? null : (uint?)s.Score
 						};
-
-			//var query =
-			//	from enrollment in db.Enrolled
-			//	where enrollment.UId == uid
-			//	from c in db.Classes
-			//	where c.CId == enrollment.CId
-			//	&& c.CatalogId == subject
-			//	&& Int32.Parse(c.Catalog.Number) == num
-			//	&& c.SemesterSeason == season
-			//	&& c.SemesterYear == year
-			//	from assCat in db.AssignmentCategories
-			//	where assCat.CId == c.CId
-			//	from assignment in db.Assignments
-			//	where assignment.AcId == assCat.AcId
-			//	from submission in db.Submissions.DefaultIfEmpty()
-			//	where submission.UId == uid
-			//	&& submission.AId == assignment.AId
-			//	select new {
-			//		aname = assignment.Name,
-			//		cname = assCat.Name,
-			//		due = assignment.DueDate,
-			//		score = submission == null? null : (uint?)submission.Score
-			//	};
 
 			return Json(query.ToArray());
 		}
