@@ -68,7 +68,7 @@ namespace LMS.Controllers {
 		/// <returns>The JSON array</returns>
 		public IActionResult GetCatalog() {
 			var query =
-				from d in db.Departments
+				(from d in db.Departments
 				join c in db.Courses
 				on d.Subject equals c.Listing
 				select new {
@@ -80,7 +80,8 @@ namespace LMS.Controllers {
 								  number = c2.Number,
 								  cname = c2.Name
 							  }
-				};
+				}).GroupBy(a => a.subject).ToArray();
+			//var temp = query.GroupBy(a => a.subject);
 			return Json(query.ToArray());
 		}
 
@@ -215,7 +216,7 @@ namespace LMS.Controllers {
 
 			// Administrators
 			{
-				var query = 
+				var query =
 					from administrator in db.Administrators
 					where administrator.UId == uid
 					select new {
@@ -225,7 +226,7 @@ namespace LMS.Controllers {
 						// leave off department
 					};
 				var theAdministrator = query.FirstOrDefault();
-				if ( theAdministrator!=null ) {
+				if (theAdministrator != null) {
 					// found one
 					return Json(theAdministrator);
 				}

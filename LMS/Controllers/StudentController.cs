@@ -69,7 +69,7 @@ namespace LMS.Controllers {
 				from course in db.Courses
 				where c.CatalogId == course.CatalogId
 				select new {
-					subject = c.CatalogId,
+					subject = course.Listing,
 					number = course.Number,
 					name = course.Name,
 					season = c.SemesterSeason,
@@ -103,30 +103,52 @@ namespace LMS.Controllers {
 			// TODO: test it against a student with multiple assignments
 			// TODO: test it against a student with multiple assignments where other students and other assignments exist
 
-			// course subject <-> course CatalogId
+			var query = from c in db.Courses
+						join c2 in db.Classes
+						on c.CatalogId equals c2.CatalogId
+						join e in db.Enrolled
+						on c2.CId equals e.CId
+						join ac in db.AssignmentCategories
+						on c2.CId equals ac.CId
+						join a in db.Assignments
+						on ac.AcId equals a.AcId
+						join s2 in db.Submissions
+						on a.AId equals s2.AId
+						where c.Listing == subject
+						&& c.Number == num.ToString()
+						&& c2.SemesterSeason == season
+						&& c2.SemesterYear == year
+						&& e.UId == uid
+						select new {
+							aname = a.Name,
+							cname = ac.Name,
+							due = a.DueDate,
+							//score =1
+							score = s2 == null? null : (uint?) s2.Score
+						};
 
-			var query =
-				from enrollment in db.Enrolled
-				where enrollment.UId == uid
-				from c in db.Classes
-				where c.CId == enrollment.CId
-				&& c.CatalogId == subject
-				&& Int32.Parse(c.Catalog.Number) == num
-				&& c.SemesterSeason == season
-				&& c.SemesterYear == year
-				from assCat in db.AssignmentCategories
-				where assCat.CId == c.CId
-				from assignment in db.Assignments
-				where assignment.AcId == assCat.AcId
-				from submission in db.Submissions.DefaultIfEmpty()
-				where submission.UId == uid
-				&& submission.AId == assignment.AId
-				select new {
-					aname = assignment.Name,
-					cname = assCat.Name,
-					due = assignment.DueDate,
-					score = submission == null? null : (uint?)submission.Score
-				};
+			//var query =
+			//	from enrollment in db.Enrolled
+			//	where enrollment.UId == uid
+			//	from c in db.Classes
+			//	where c.CId == enrollment.CId
+			//	&& c.CatalogId == subject
+			//	&& Int32.Parse(c.Catalog.Number) == num
+			//	&& c.SemesterSeason == season
+			//	&& c.SemesterYear == year
+			//	from assCat in db.AssignmentCategories
+			//	where assCat.CId == c.CId
+			//	from assignment in db.Assignments
+			//	where assignment.AcId == assCat.AcId
+			//	from submission in db.Submissions.DefaultIfEmpty()
+			//	where submission.UId == uid
+			//	&& submission.AId == assignment.AId
+			//	select new {
+			//		aname = assignment.Name,
+			//		cname = assCat.Name,
+			//		due = assignment.DueDate,
+			//		score = submission == null? null : (uint?)submission.Score
+			//	};
 
 			return Json(query.ToArray());
 		}

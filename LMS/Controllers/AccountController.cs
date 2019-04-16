@@ -457,15 +457,6 @@ namespace LMS.Controllers {
 
 				db.Administrators.Add(admin);
 				db.SaveChanges();
-
-				////get the uID and return it
-				//var query =
-				//	from a in db.Administrators
-				//	where a.FirstName == fName
-				//	&& a.LastName == lName
-				//	&& a.Dob == DOB
-				//	select a.UId;
-				//return query.ToString();
 			}
 			else if (role == "Professor") {
 				Professors professors = new Professors {
@@ -477,16 +468,6 @@ namespace LMS.Controllers {
 				};
 				db.Professors.Add(professors);
 				db.SaveChanges();
-
-				////get the uID and return it
-				//var query =
-				//	from p in db.Professors
-				//	where p.FirstName == fName
-				//	&& p.LastName == lName
-				//	&& p.Dob == DOB
-				//	&& p.WorksIn == SubjectAbbrev
-				//	select p.UId;
-				//return query.ToString();
 			}
 			else {
 				Students student = new Students {
@@ -499,16 +480,6 @@ namespace LMS.Controllers {
 
 				db.Students.Add(student);
 				db.SaveChanges();
-
-				////get the uID and return it
-				//var query =
-				//	from s in db.Students
-				//	where s.FirstName == fName
-				//	&& s.LastName == lName
-				//	&& s.Dob == DOB
-				//	&& s.Major == SubjectAbbrev
-				//	select s.UId;
-				//return query.ToString();
 			}
 			return newUnusedId;
 		}

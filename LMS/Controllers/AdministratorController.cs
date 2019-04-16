@@ -46,10 +46,6 @@ namespace LMS.Controllers {
 			return Json(query.ToArray());
 		}
 
-
-
-
-
 		/// <summary>
 		/// Returns a JSON array of all the professors working in a given department.
 		/// Each object in the array should have the following fields:
@@ -70,8 +66,6 @@ namespace LMS.Controllers {
 				};
 			return Json(query.ToArray());
 		}
-
-
 
 		/// <summary>
 		/// Creates a course.
