@@ -122,5 +122,54 @@ namespace xUnitTests {
 			var jsonResult = controller.GetUser("some garbage") as JsonResult;
 			Assert.False( Utils.ResultSuccessValue(jsonResult) );
 		}
+
+		[Fact]
+		public void GetDepartment() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+
+			var jsonResult = controller.GetDepartments() as JsonResult;
+			dynamic resultValue = jsonResult.Value as dynamic;
+			Assert.Single(resultValue);
+		}
+
+		[Fact]
+		public void GetCatalogSingle() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+
+			var jsonResult = controller.GetCatalog() as JsonResult;
+			dynamic resultValue = jsonResult.Value as dynamic;
+			Assert.Single(resultValue);
+			var csCatalog = resultValue[0];
+			
+		}
+
+		[Fact]
+		public void GetCatalogWithOneCourse() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+
+			Courses newCourse = new Courses() {
+				Listing = "CS",
+				Number = "101",
+				Name = "Calculushies"
+			};
+			db.Courses.Add(newCourse);
+			int rowsAffected = db.SaveChanges();
+
+			var jsonResult = controller.GetCatalog() as JsonResult;
+			dynamic resultValue = jsonResult.Value as dynamic;
+			Assert.Single(resultValue);
+			var csCatalog = resultValue[0];
+			Assert.NotNull(csCatalog);
+			dynamic courses = Utils.GetValue<dynamic>(csCatalog, "courses");
+			Assert.NotNull(courses);
+			Assert.Single(courses);
+		}
+		
 	}
 }
