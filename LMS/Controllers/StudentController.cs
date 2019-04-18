@@ -220,16 +220,13 @@ namespace LMS.Controllers {
 		/// <returns>A JSON object containing {success = {true/false}. 
 		/// false if the student is already enrolled in the class, true otherwise.</returns>
 		public IActionResult Enroll(string subject, int num, string season, int year, string uid) {
-
-			// TODO: test it at all
-			// TODO: test it against a successful, typical case
-			// TODO: test it when the student is already enrolled in the class
-			// TODO: test it against a class that doesn't exist
-
+			
 			// get the class
 			var classQuery =
 				from c in db.Classes
-				where c.CatalogId == subject
+				join course in db.Courses
+				on c.CatalogId equals course.CatalogId
+				where course.Listing == subject
 				&& Int32.Parse(c.Catalog.Number) == num
 				&& c.SemesterSeason == season
 				&& c.SemesterYear == year
@@ -283,14 +280,7 @@ namespace LMS.Controllers {
 		/// <param name="uid">The uid of the student</param>
 		/// <returns>A JSON object containing a single field called "gpa" with the number value</returns>
 		public IActionResult GetGPA(string uid) {
-
-			// TODO: test it at all
-			// TODO: test against a student that is not enrolled in any classes
-			// TODO: test against a student that is enrolled in classes, but has no grades
-			// TODO: test against a student that is enrolled in a class, has a grade, and should get a 4.0
-			// TODO: test against a student that is enrolled in multiple classes, has grades, and should get a 4.0
-			// TODO: test against a student that is enrolled in multiple classes, has grades, and should get a 3.3 etc
-
+			
 			var query =
 				from enrollment in db.Enrolled
 				where enrollment.UId == uid
@@ -309,7 +299,7 @@ namespace LMS.Controllers {
 					// ignore
 					continue;
 				}
-				totalCredits += 4;
+				totalCredits += 1;
 				creditCount += GradeToGradePoint(enrollment.Grade);
 			}
 

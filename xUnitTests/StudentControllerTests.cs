@@ -347,5 +347,244 @@ namespace xUnitTests {
 			uint score = Utils.GetValue<uint>(firstResult, "score");
 			Assert.Equal((uint)78, score);
 		}
+
+		[Fact]
+		public void EnrollWhenDoesntExist() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+			
+
+			var jsonResults = controller.Enroll("CS", 3550, "Spring", 2019, uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			Assert.False(Utils.ResultSuccessValue(jsonResults));
+		}
+
+		[Fact]
+		public void EnrollTrivial() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			Courses newCourse = new Courses {
+				CatalogId = "12345",
+				Listing = "CS",
+				Name = "Algorithms",
+				Number = "3550"
+			};
+			db.Courses.Add(newCourse);
+
+			Classes newClass = new Classes {
+				CId = 101,
+				CatalogId = "12345",
+				SemesterYear = 2019,
+				SemesterSeason = "Spring",
+				Location = "On the moon",
+				StartTime = new TimeSpan(),
+				EndTime = new TimeSpan()
+			};
+			db.Classes.Add(newClass);
+			
+			db.SaveChanges();
+
+			var jsonResults = controller.Enroll("CS", 3550, "Spring", 2019, uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			Assert.True(Utils.ResultSuccessValue(jsonResults));
+
+			Assert.Single(db.Enrolled);
+		}
+
+		[Fact]
+		public void EnrollDuplicate() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			Courses newCourse = new Courses {
+				CatalogId = "12345",
+				Listing = "CS",
+				Name = "Algorithms",
+				Number = "3550"
+			};
+			db.Courses.Add(newCourse);
+
+			Classes newClass = new Classes {
+				CId = 101,
+				CatalogId = "12345",
+				SemesterYear = 2019,
+				SemesterSeason = "Spring",
+				Location = "On the moon",
+				StartTime = new TimeSpan(),
+				EndTime = new TimeSpan()
+			};
+			db.Classes.Add(newClass);
+
+			db.SaveChanges();
+
+			var jsonResults = controller.Enroll("CS", 3550, "Spring", 2019, uid) as JsonResult;
+
+			Assert.True(Utils.ResultSuccessValue(jsonResults));
+
+			Assert.Single(db.Enrolled);
+
+			jsonResults = controller.Enroll("CS", 3550, "Spring", 2019, uid) as JsonResult;
+
+			Assert.False(Utils.ResultSuccessValue(jsonResults));
+
+			Assert.Single(db.Enrolled);
+		}
+
+		[Fact]
+		public void GetGPANotEnrolled() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+
+			var jsonResults = controller.GetGPA( uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			float gpa = Utils.GetValue<float>(resultValues, "gpa");
+
+			Assert.Equal(0, gpa);
+		}
+
+		[Fact]
+		public void GetGPAEnrolledNoGrades() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			Enrolled newEnrolled = new Enrolled {
+					UId = uid,
+					CId = 101,
+					Grade = "-"
+			};
+			db.Enrolled.Add(newEnrolled);
+			db.SaveChanges();
+
+			var jsonResults = controller.GetGPA(uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			float gpa = Utils.GetValue<float>(resultValues, "gpa");
+
+			Assert.Equal(0, gpa);
+		}
+
+		[Fact]
+		public void GetGPA40() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			Enrolled newEnrolled = new Enrolled {
+				UId = uid,
+				CId = 101,
+				Grade = "A"
+			};
+			db.Enrolled.Add(newEnrolled);
+			db.SaveChanges();
+
+			var jsonResults = controller.GetGPA(uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			float gpa = Utils.GetValue<float>(resultValues, "gpa");
+
+			Assert.Equal(4, gpa);
+		}
+
+		[Fact]
+		public void GetGPAMultiple40() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			for ( int i = 0; i < 10; i ++ ) {
+				Enrolled newEnrolled = new Enrolled {
+					UId = uid,
+					CId = 101 + (uint)i,
+					Grade = "A"
+				};
+				db.Enrolled.Add(newEnrolled);
+			}
+			
+			db.SaveChanges();
+
+			var jsonResults = controller.GetGPA(uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			float gpa = Utils.GetValue<float>(resultValues, "gpa");
+
+			Assert.Equal(4, gpa);
+		}
+
+		[Fact]
+		public void GetGPAMultiple33() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			for (int i = 0; i < 10; i++) {
+				Enrolled newEnrolled = new Enrolled {
+					UId = uid,
+					CId = 101 + (uint)i,
+					Grade = "B+"
+				};
+				db.Enrolled.Add(newEnrolled);
+			}
+
+			db.SaveChanges();
+
+			var jsonResults = controller.GetGPA(uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			float gpa = Utils.GetValue<float>(resultValues, "gpa");
+
+			Assert.True( MathF.Abs( 3.3f - gpa) < 0.01f);
+		}
+
+		[Fact]
+		public void GetGPAMultiple07() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			for (int i = 0; i < 10; i++) {
+				Enrolled newEnrolled = new Enrolled {
+					UId = uid,
+					CId = 101 + (uint)i,
+					Grade = "D-"
+				};
+				db.Enrolled.Add(newEnrolled);
+			}
+
+			db.SaveChanges();
+
+			var jsonResults = controller.GetGPA(uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			float gpa = Utils.GetValue<float>(resultValues, "gpa");
+
+			Assert.True(MathF.Abs(0.7f - gpa) < 0.01f);
+		}
 	}
 }
