@@ -292,18 +292,19 @@ namespace LMS.Controllers {
 			}
 
 			float creditCount = 0;
-			float totalCredits = 0;
+			//float totalCredits = 0;
+			float classCount=0;
 
 			foreach( var enrollment in query ) {
 				if ( enrollment.Grade == "--" || string.IsNullOrEmpty(enrollment.Grade) ) {
 					// ignore
 					continue;
 				}
-				totalCredits += 1;
+				classCount += 1;
 				creditCount += GradeToGradePoint(enrollment.Grade);
 			}
 
-			return Json(new { gpa = creditCount/ totalCredits });
+			return Json(new { gpa = creditCount/ classCount });
 		}
 
 		private float GradeToGradePoint(string grade) {
