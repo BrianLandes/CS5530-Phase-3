@@ -147,20 +147,14 @@ namespace LMS.Controllers {
 		/// <returns>A JSON object containing {success = true/false}</returns>
 		public IActionResult SubmitAssignmentText(string subject, int num, string season, int year,
 		  string category, string asgname, string uid, string contents) {
-
-			// TODO: test it at all
-			// TODO: test it against a typical, successful case
-			// TODO: test it against a resubmission
-
-			// course subject <-> course CatalogId
-
+			
 			// get the assignment id
 			var query =
 				from enrollment in db.Enrolled
 				where enrollment.UId == uid
 				from c in db.Classes
 				where c.CId == enrollment.CId
-				&& c.CatalogId == subject
+				&& c.Catalog.Listing == subject
 				&& Int32.Parse(c.Catalog.Number) == num
 				&& c.SemesterSeason == season
 				&& c.SemesterYear == year
@@ -302,6 +296,10 @@ namespace LMS.Controllers {
 				}
 				classCount += 1;
 				creditCount += GradeToGradePoint(enrollment.Grade);
+			}
+
+			if (classCount==0) {
+				return Json(new { gpa = 0.0f });
 			}
 
 			return Json(new { gpa = creditCount/ classCount });
