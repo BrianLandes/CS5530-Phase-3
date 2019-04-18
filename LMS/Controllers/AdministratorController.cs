@@ -119,22 +119,45 @@ namespace LMS.Controllers {
 		/// true otherwise.</returns>
 		public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor) {
 
-			// get the cID using subject and number
-			var query = from c in db.Courses
-						where c.Listing == subject
-						&& c.Number == number.ToString()
-						select c.CatalogId;
+			var courseQuery = from course in db.Courses
+						where course.Listing == subject
+						&& Int32.Parse(course.Number) == number
+						select course;
 
-			// check this
-			var queryCheck = from c2 in db.Classes
-							 where c2.CatalogId == query.ToString()
-							 select c2.CatalogId;
-			if(queryCheck.Count() > 0) {
-				return Json(new { success = false });
+			// check for class offerings of the same course in the same semester
+			{
+				var classQuery = from course in courseQuery
+								 join classOffering in db.Classes
+								 on course.CatalogId equals classOffering.CatalogId
+								 where classOffering.SemesterSeason == season
+								 && classOffering.SemesterYear == year
+								 select course;
+
+				if (classQuery.Any()) {
+					return Json(new { success = false });
+				}
 			}
 
+			// check for class offerings that overlap the time and location
+			{
+				var classQuery = from classOffering in db.Classes
+								 where classOffering.Location == location
+								 where classOffering.SemesterSeason == season
+								 && classOffering.SemesterYear == year
+								 && classOffering.StartTime < end.TimeOfDay
+								 && classOffering.EndTime > start.TimeOfDay
+								 select classOffering;
+
+				if (classQuery.Any()) {
+					return Json(new { success = false });
+				}
+			}
+
+			var theCourse = courseQuery.FirstOrDefault();
+
 			Classes newClass = new Classes() {
-				CatalogId = query.ToString(),
+				CatalogId = theCourse.CatalogId,
+				Catalog = theCourse,
 				SemesterSeason = season,
 				SemesterYear = (ushort) year,
 				StartTime = start.TimeOfDay,
@@ -145,9 +168,7 @@ namespace LMS.Controllers {
 			};
 			db.Classes.Add(newClass);
 			int rowsAffected = db.SaveChanges();
-
-			// TODO: fix the return statement
-
+			
 			return Json(new { success = rowsAffected > 0 });
 		}
 

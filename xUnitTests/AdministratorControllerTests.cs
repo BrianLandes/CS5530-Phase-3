@@ -60,5 +60,71 @@ namespace xUnitTests {
 
 		// CreateClass
 
+		[Fact]
+		public void CreateClassTrivial() {
+			var db = Utils.MakeMockDatabase();
+			var controller = MakeController(db);
+
+			var jsonResult = controller.CreateCourse("CS", 4400, "Probabilitities") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+
+			jsonResult = controller.CreateClass( "CS", 4400, "Spring", 2019, DateTime.Now, DateTime.Now, "On the moon", "Professor Landes") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+		}
+
+
+		[Fact]
+		public void CreateClassSameCourseSemester() {
+			var db = Utils.MakeMockDatabase();
+			var controller = MakeController(db);
+
+			var jsonResult = controller.CreateCourse("CS", 4400, "Probabilitities") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+
+			jsonResult = controller.CreateClass("CS", 4400, "Spring", 2019,
+				DateTime.Now, DateTime.Now, "On the moon", "Professor Landes") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+
+			jsonResult = controller.CreateClass("CS", 4400, "Spring", 2019,
+				DateTime.UnixEpoch, DateTime.UnixEpoch, "On the moon", "Professor Landes") as JsonResult;
+			Assert.False(Utils.ResultSuccessValue(jsonResult));
+		}
+
+		[Fact]
+		public void CreateClassDifferentCourseSemester() {
+			var db = Utils.MakeMockDatabase();
+			var controller = MakeController(db);
+
+			var jsonResult = controller.CreateCourse("CS", 4400, "Probabilitities") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+
+			jsonResult = controller.CreateClass("CS", 4400, "Spring", 2019,
+				DateTime.Now, DateTime.Now, "On the moon", "Professor Landes") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+
+			jsonResult = controller.CreateClass("CS", 4400, "Spring", 1999,
+				DateTime.UnixEpoch, DateTime.UnixEpoch, "On the moon", "Professor Landes") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+		}
+
+		[Fact]
+		public void CreateClassOverlappingTimeLocation() {
+			var db = Utils.MakeMockDatabase();
+			var controller = MakeController(db);
+
+			var jsonResult = controller.CreateCourse("CS", 4400, "Probabilitities") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+
+			jsonResult = controller.CreateCourse("CS", 1300, "Algorithmatics") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+
+			jsonResult = controller.CreateClass("CS", 4400, "Spring", 2019,
+				new DateTime(2019,5,21, 6,00,00), new DateTime(2019, 5, 21, 7, 00, 00), "On the moon", "Professor Landes") as JsonResult;
+			Assert.True(Utils.ResultSuccessValue(jsonResult));
+
+			jsonResult = controller.CreateClass("CS", 1300, "Spring", 2019,
+				new DateTime(2019, 5, 21, 5, 00, 00), new DateTime(2019, 5, 21, 6, 30, 00), "On the moon", "Professor Landes") as JsonResult;
+			Assert.False(Utils.ResultSuccessValue(jsonResult));
+		}
 	}
 }
