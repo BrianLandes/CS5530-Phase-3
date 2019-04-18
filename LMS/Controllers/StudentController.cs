@@ -95,38 +95,34 @@ namespace LMS.Controllers {
 		/// <param name="uid"></param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid) {
-			//what to do if there are no submissions? 
 
-			// TODO: test it at all
-			// TODO: test it against a student with no assignments
-			// TODO: test it against a student with one assignment
 			// TODO: test it against a student with one assignment where other students and other assignments exist
 			// TODO: test it against a student with multiple assignments
 			// TODO: test it against a student with multiple assignments where other students and other assignments exist
-			var query = from c in db.Courses
-						join c2 in db.Classes
-						on c.CatalogId equals c2.CatalogId
-						join ac in db.AssignmentCategories
-						on c2.CId equals ac.CId
-						join a in db.Assignments
-						on ac.AcId equals a.AcId
-						where c.Listing == subject
-						&& c.Number == num.ToString()
-						&& c2.SemesterSeason == season
-						&& c2.SemesterYear == year
-						select new {
-							aname = a.Name,
-							cname = ac.Name,
-							due = a.DueDate,
-							// problems getting the score
-							score = 1
-							//score = from s in db.Submissions.DefaultIfEmpty()
-							//		where a.AId == s.AId &&
-							//		s.UId == uid
-							//		select s.Score
-							//score = s == null? null : (uint?)s.Score
-						};
+			var query = from course in db.Courses
+					join classOffering in db.Classes
+					on course.CatalogId equals classOffering.CatalogId
+					join assCat in db.AssignmentCategories
+					on classOffering.CId equals assCat.CId
+					join assignment in db.Assignments
+					on assCat.AcId equals assignment.AcId
+					where course.Listing == subject
+					&& course.Number == num.ToString()
+					&& classOffering.SemesterSeason == season
+					&& classOffering.SemesterYear == year
 
+					select new {
+						aname = assignment.Name,
+						cname = assCat.Name,
+						due = assignment.DueDate,
+						//score = sub == null ? null : (uint?)sub.Score
+						score = (from sub in db.Submissions
+								where assignment.AId == sub.AId
+								&& sub.UId == uid
+								select (uint ? )sub.Score)
+								.FirstOrDefault<uint?>()
+					};
+			
 			return Json(query.ToArray());
 		}
 

@@ -215,5 +215,137 @@ namespace xUnitTests {
 
 			Assert.Equal(several, resultValues.Length);
 		}
+
+		[Fact]
+		public void GetAssignmentsInClassWhenEmpty() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			var jsonResults = controller.GetAssignmentsInClass("CS", 3550, "Spring", 2019, uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			Assert.Empty(resultValues);
+		}
+
+		[Fact]
+		public void GetAssignmentsInClassWhenSingle() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			Courses newCourse = new Courses {
+				CatalogId = "12345",
+				Listing = "CS",
+				Name = "Algorithms",
+				Number = "3550"
+			};
+			db.Courses.Add(newCourse);
+
+			Classes newClass = new Classes {
+				CId = 101,
+				CatalogId = "12345",
+				SemesterYear = 2019,
+				SemesterSeason = "Spring",
+				Location = "On the moon",
+				StartTime = new TimeSpan(),
+				EndTime = new TimeSpan()
+			};
+			db.Classes.Add(newClass);
+
+			AssignmentCategories assCat = new AssignmentCategories {
+				AcId = 1002,
+				Name = "Quizzes",
+				GradingWeight = 50,
+				CId = 101
+			};
+			db.AssignmentCategories.Add(assCat);
+
+			Assignments newAssignment = new Assignments {
+				AcId = 1002,
+				Name = "Bonus Quiz",
+				MaxPointValue = 102,
+				DueDate = DateTime.Now,
+				Content = "oanklaks fl lja",
+			};
+			db.Assignments.Add(newAssignment);
+			db.SaveChanges();
+
+			var jsonResults = controller.GetAssignmentsInClass("CS", 3550, "Spring", 2019, uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			Assert.Single(resultValues);
+		}
+
+		[Fact]
+		public void GetAssignmentsInClassWithSubmission() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+			string uid = AddOneStudent(db);
+
+			Courses newCourse = new Courses {
+				CatalogId = "12345",
+				Listing = "CS",
+				Name = "Algorithms",
+				Number = "3550"
+			};
+			db.Courses.Add(newCourse);
+
+			Classes newClass = new Classes {
+				CId = 101,
+				CatalogId = "12345",
+				SemesterYear = 2019,
+				SemesterSeason = "Spring",
+				Location = "On the moon",
+				StartTime = new TimeSpan(),
+				EndTime = new TimeSpan()
+			};
+			db.Classes.Add(newClass);
+
+			AssignmentCategories assCat = new AssignmentCategories {
+				AcId = 1002,
+				Name = "Quizzes",
+				GradingWeight = 50,
+				CId = 101
+			};
+			db.AssignmentCategories.Add(assCat);
+
+			Assignments newAssignment = new Assignments {
+				AId = 999,
+				AcId = 1002,
+				Name = "Bonus Quiz",
+				MaxPointValue = 102,
+				DueDate = DateTime.Now,
+				Content = "oanklaks fl lja",
+			};
+			db.Assignments.Add(newAssignment);
+
+			Submissions newSubmission = new Submissions {
+				UId = uid,
+				AId = 999,
+				Content = "This is some serious content",
+				Time = DateTime.Now,
+				Score = 78,
+			};
+			db.Submissions.Add(newSubmission);
+
+			db.SaveChanges();
+
+			var jsonResults = controller.GetAssignmentsInClass("CS", 3550, "Spring", 2019, uid) as JsonResult;
+
+			dynamic resultValues = jsonResults.Value;
+
+			Assert.Single(resultValues);
+
+			var firstResult = resultValues[0];
+
+			uint score = Utils.GetValue<uint>(firstResult, "score");
+			Assert.Equal((uint)78, score);
+		}
 	}
 }
