@@ -261,7 +261,7 @@ namespace LMS.Controllers {
 		/// <param name="asgdue">The due DateTime for the new assignment</param>
 		/// <param name="asgcontents">The contents of the new assignment</param>
 		/// <returns>A JSON object containing success = true/false</returns>
-		public IActionResult CreateAssignment(string subject, int num, string season, 
+		public IActionResult CreateAssignment(string subject, int num, string season,
 				int year, string category, string asgname, int asgpoints,
 				DateTime asgdue, string asgcontents) {
 
@@ -279,13 +279,17 @@ namespace LMS.Controllers {
 			Assignments newAssignment = new Assignments() {
 				AcId = query.FirstOrDefault(),
 				Name = asgname,
-				MaxPointValue = (uint) asgpoints,
+				MaxPointValue = (uint)asgpoints,
 				DueDate = asgdue,
 				Content = asgcontents
 			};
 
 			db.Assignments.Add(newAssignment);
 			int rowsAffected = db.SaveChanges();
+
+			if (rowsAffected > 0) {
+				UpdateGrades(subject, num, season, year);
+			}
 
 			return Json(new { success = rowsAffected > 0 });
 		}
@@ -351,7 +355,7 @@ namespace LMS.Controllers {
 		/// <param name="uid">The uid of the student who's submission is being graded</param>
 		/// <param name="score">The new score for the submission</param>
 		/// <returns>A JSON object containing success = true/false</returns>
-		public IActionResult GradeSubmission(string subject, int num, string season, 
+		public IActionResult GradeSubmission(string subject, int num, string season,
 				int year, string category, string asgname, string uid, int score) {
 
 			var submissionQuery =
@@ -374,14 +378,16 @@ namespace LMS.Controllers {
 				select sub;
 
 			var theSubmission = submissionQuery.FirstOrDefault();
-			if ( theSubmission == null ) {
+			if (theSubmission == null) {
 				return Json(new { success = false });
 			}
 
 			theSubmission.Score = (uint)score;
 			int rowsAffected = db.SaveChanges();
 
-			return Json(new { success = rowsAffected>0 });
+			UpdateGrade(subject, num, season, year, uid);
+
+			return Json(new { success = rowsAffected > 0 });
 		}
 
 
@@ -413,7 +419,26 @@ namespace LMS.Controllers {
 			return Json(query.ToArray());
 		}
 
-		private void UpdateGrade(string subject, int num, string season,
+		private void UpdateGrades(string subject, int num, string season,
+			int year) {
+			var query = from course in db.Courses
+						join classes in db.Classes
+						on course.CatalogId equals classes.CatalogId
+						join enroll in db.Enrolled
+						on classes.CId equals enroll.CId
+						where course.Listing == subject
+						&& course.Number == num.ToString()
+						&& classes.SemesterSeason == season
+						&& classes.SemesterYear == year
+						select new {
+							uid = enroll.UId
+						};
+			foreach (var uid in query) {
+				UpdateGrade(subject, num, season, year, uid.ToString());
+			}
+		}
+
+		private IActionResult UpdateGrade(string subject, int num, string season,
 				int year, string uid) {
 
 			var query =
@@ -422,30 +447,91 @@ namespace LMS.Controllers {
 				on course.CatalogId equals classOffering.CatalogId
 				join assCat in db.AssignmentCategories
 				on classOffering.CId equals assCat.CId
-				join assignment in db.Assignments
-				on assCat.AcId equals assignment.AcId
 				where course.Listing == subject
 				&& Int32.Parse(course.Number) == num
 				&& classOffering.SemesterSeason == season
 				&& classOffering.SemesterYear == year
-
 				select new {
-					assignmentTotalScore = (float) assignment.MaxPointValue,
-					weight = (float)assCat.GradingWeight,
-					score = (from sub in db.Submissions
-							 where assignment.AId == sub.AId
-							 && sub.UId == uid
-							 select (uint?)sub.Score)
-								.FirstOrDefault<uint?>()
-						
+					weight = assCat.GradingWeight,
+					assignments = from a in db.Assignments
+								  where a.AcId == assCat.AcId
+								  join s in db.Submissions
+								  on a.AId equals s.AId
+								  select new {
+									  maxpoint = a.MaxPointValue,
+									  earned = s.Score
+								  }
 				};
 
-			float runningTotal = 0;
-			foreach( var element in query ) {
-				var score = element.score != null ? (float)element.score : 0;
-				runningTotal += score / element.assignmentTotalScore * element.weight;
-			}
 
+			double totalWeight = 0;
+			double totalPercentage = 0;
+
+			foreach (var category in query) {
+				if (category.assignments.Count() != 0) {
+					double totalEarned = 0;
+					double totalMax = 0;
+					totalWeight += category.weight;
+					foreach (var assignment in category.assignments) {
+						totalEarned += assignment.earned;
+						totalMax += assignment.maxpoint;
+					}
+
+					totalPercentage += category.weight * (totalEarned / totalMax);
+				}
+			}
+			double scalingFactor = 100 / totalWeight;
+			double percent = totalPercentage * scalingFactor;
+			string grade = GetLetterGrade(percent);
+
+			//update the enrolled table
+			var updateQuery = from enroll in db.Enrolled
+							  where enroll.UId == uid
+							  select enroll;
+			var update = updateQuery.FirstOrDefault();
+			update.Grade = grade;
+			int rowsAffected = db.SaveChanges();
+
+			return Json(new { success = rowsAffected > 0 });
+		}
+
+		private string GetLetterGrade(double percentage) {
+			if (percentage >= 93) {
+				return "A";
+			}
+			else if (percentage >= 90) {
+				return "A-";
+			}
+			else if (percentage >= 87) {
+				return "B+";
+			}
+			else if (percentage >= 83) {
+				return "B";
+			}
+			else if (percentage >= 80) {
+				return "B-";
+			}
+			else if (percentage >= 77) {
+				return "C+";
+			}
+			else if (percentage >= 73) {
+				return "C";
+			}
+			else if (percentage >= 70) {
+				return "C-";
+			}
+			else if (percentage >= 67) {
+				return "D+";
+			}
+			else if (percentage >= 63) {
+				return "D";
+			}
+			else if (percentage >= 60) {
+				return "D-";
+			}
+			else {
+				return "E";
+			}
 		}
 
 		/*******End code to modify********/
