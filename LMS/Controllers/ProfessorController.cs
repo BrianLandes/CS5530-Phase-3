@@ -261,7 +261,10 @@ namespace LMS.Controllers {
 		/// <param name="asgdue">The due DateTime for the new assignment</param>
 		/// <param name="asgcontents">The contents of the new assignment</param>
 		/// <returns>A JSON object containing success = true/false</returns>
-		public IActionResult CreateAssignment(string subject, int num, string season, int year, string category, string asgname, int asgpoints, DateTime asgdue, string asgcontents) {
+		public IActionResult CreateAssignment(string subject, int num, string season, 
+				int year, string category, string asgname, int asgpoints,
+				DateTime asgdue, string asgcontents) {
+
 			var query = from c in db.Courses
 						join c2 in db.Classes
 						on c.CatalogId equals c2.CatalogId
@@ -348,9 +351,37 @@ namespace LMS.Controllers {
 		/// <param name="uid">The uid of the student who's submission is being graded</param>
 		/// <param name="score">The new score for the submission</param>
 		/// <returns>A JSON object containing success = true/false</returns>
-		public IActionResult GradeSubmission(string subject, int num, string season, int year, string category, string asgname, string uid, int score) {
+		public IActionResult GradeSubmission(string subject, int num, string season, 
+				int year, string category, string asgname, string uid, int score) {
 
-			return Json(new { success = true });
+			var submissionQuery =
+				from course in db.Courses
+				join classOffering in db.Classes
+				on course.CatalogId equals classOffering.CatalogId
+				join assCat in db.AssignmentCategories
+				on classOffering.CId equals assCat.CId
+				join assignment in db.Assignments
+				on assCat.AcId equals assignment.AcId
+				where assCat.Name == category
+				where assignment.Name == asgname
+				where course.Listing == subject
+				&& course.Number == num.ToString()
+				&& classOffering.SemesterSeason == season
+				&& classOffering.SemesterYear == year
+				from sub in db.Submissions
+				where assignment.AId == sub.AId
+				&& sub.UId == uid
+				select sub;
+
+			var theSubmission = submissionQuery.FirstOrDefault();
+			if ( theSubmission == null ) {
+				return Json(new { success = false });
+			}
+
+			theSubmission.Score = (uint)score;
+			int rowsAffected = db.SaveChanges();
+
+			return Json(new { success = rowsAffected>0 });
 		}
 
 
@@ -382,6 +413,40 @@ namespace LMS.Controllers {
 			return Json(query.ToArray());
 		}
 
+		private void UpdateGrade(string subject, int num, string season,
+				int year, string uid) {
+
+			var query =
+				from course in db.Courses
+				join classOffering in db.Classes
+				on course.CatalogId equals classOffering.CatalogId
+				join assCat in db.AssignmentCategories
+				on classOffering.CId equals assCat.CId
+				join assignment in db.Assignments
+				on assCat.AcId equals assignment.AcId
+				where course.Listing == subject
+				&& Int32.Parse(course.Number) == num
+				&& classOffering.SemesterSeason == season
+				&& classOffering.SemesterYear == year
+
+				select new {
+					assignmentTotalScore = (float) assignment.MaxPointValue,
+					weight = (float)assCat.GradingWeight,
+					score = (from sub in db.Submissions
+							 where assignment.AId == sub.AId
+							 && sub.UId == uid
+							 select (uint?)sub.Score)
+								.FirstOrDefault<uint?>()
+						
+				};
+
+			float runningTotal = 0;
+			foreach( var element in query ) {
+				var score = element.score != null ? (float)element.score : 0;
+				runningTotal += score / element.assignmentTotalScore * element.weight;
+			}
+
+		}
 
 		/*******End code to modify********/
 

@@ -11,13 +11,13 @@ namespace xUnitTests {
 
 		#region Utilities
 
-		private static StudentController MakeController(Team41LMSContext db) {
+		public static StudentController MakeController(Team41LMSContext db) {
 			var controller = new StudentController();
 			controller.UseLMSContext(db);
 			return controller;
 		}
 
-		private static string AddOneStudent(Team41LMSContext db) {
+		public static string AddOneStudent(Team41LMSContext db) {
 			Students brian = new Students {
 				UId = "u0000001",
 				Major = "CS",
