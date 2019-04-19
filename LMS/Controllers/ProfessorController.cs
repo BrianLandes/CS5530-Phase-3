@@ -136,13 +136,7 @@ namespace LMS.Controllers {
 		/// or null to return assignments from all categories</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category) {
-
-			// TODO: test when category == null
-			// TODO: test when more than one submission
-			// TODO: test when more than one class
-			// TODO: test when more than one assignment category
-			// TODO: test when more than one assignment
-
+			
 			if (category == null) {
 				var query = from c in db.Courses
 							join c2 in db.Classes
@@ -236,18 +230,31 @@ namespace LMS.Controllers {
 		/// <returns>A JSON object containing {success = true/false} </returns>
 		public IActionResult CreateAssignmentCategory(string subject, int num, string season, int year, string category, int catweight) {
 
-			var query = from c in db.Courses
-						join c2 in db.Classes
-						on c.CatalogId equals c2.CatalogId
-						where c.Listing == subject
-						&& c.Number == num.ToString()
-						&& c2.SemesterSeason == season
-						&& c2.SemesterYear == year
-						select c2.CId;
+			var query = from course in db.Courses
+						join classOffering in db.Classes
+						on course.CatalogId equals classOffering.CatalogId
+						where course.Listing == subject
+						&& course.Number == num.ToString()
+						&& classOffering.SemesterSeason == season
+						&& classOffering.SemesterYear == year
+						select classOffering;
+			var firstClass = query.FirstOrDefault();
+
+			if (firstClass == null) {
+				return Json(new { success = false });
+			}
+
+			// check if this class already has a category with that name
+			foreach( var assCat in firstClass.AssignmentCategories ) {
+				if ( assCat.Name == category ) {
+					return Json(new { success = false });
+				}
+			}
+
 			AssignmentCategories newAC = new AssignmentCategories() {
 				Name = category,
 				GradingWeight = (uint)catweight,
-				CId = query.FirstOrDefault()
+				CId = firstClass.CId
 			};
 
 			db.AssignmentCategories.Add(newAC);
@@ -283,9 +290,15 @@ namespace LMS.Controllers {
 						&& c2.SemesterSeason == season
 						&& c2.SemesterYear == year
 						&& a.Name == category
-						select a.AcId;
+						select a;
+			var assCat = query.FirstOrDefault();
+
+			if (assCat == null) {
+				return Json(new { success = false });
+			}
+
 			Assignments newAssignment = new Assignments() {
-				AcId = query.FirstOrDefault(),
+				AcId = assCat.AcId,
 				Name = asgname,
 				MaxPointValue = (uint)asgpoints,
 				DueDate = asgdue,
@@ -365,10 +378,7 @@ namespace LMS.Controllers {
 		/// <returns>A JSON object containing success = true/false</returns>
 		public IActionResult GradeSubmission(string subject, int num, string season,
 				int year, string category, string asgname, string uid, int score) {
-
-			// TODO: test when submission doesn't exist
-			// TODO: test that the student's overall grade was affected
-
+			
 			var submissionQuery =
 				from course in db.Courses
 				join classOffering in db.Classes
