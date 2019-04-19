@@ -183,7 +183,13 @@ namespace LMS.Controllers {
 						&& a.Name == asgname
 						&& s.UId == uid
 						select s.Content;
-			return Content(query.First());
+			if (query.ToArray().Count() == 0) {
+				return Content("");
+			}
+			else {
+				return Content(query.First());
+			}
+			
 		}
 
 

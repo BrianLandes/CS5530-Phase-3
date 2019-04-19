@@ -114,7 +114,6 @@ namespace LMS.Controllers {
 					dob = s.Dob.Date,
 					grade = e.Grade
 				};
-
 			return Json(query.ToArray());
 		}
 
