@@ -436,7 +436,7 @@ namespace LMS.Controllers {
 						};
 			if(query.Count() != 0) {
 				foreach (var uid in query) {
-					UpdateGrade(subject, num, season, year, uid.ToString());
+					UpdateGrade(subject, num, season, year, uid.uid);
 				}
 			}
 		}
@@ -487,19 +487,15 @@ namespace LMS.Controllers {
 			double scalingFactor = 100 / totalWeight;
 			double percent = totalPercentage * scalingFactor;
 			string grade = GetLetterGrade(percent);
-
-			//BUG HERE SOMEWHERE!!! 
-			int temp = (int)query.First().cID;
+			
 			//update the enrolled table
 			var updateQuery = from enroll in db.Enrolled
 							  where enroll.UId == uid
 							  && enroll.CId == query.First().cID
-							  select new {
-								  grade = enroll.Grade
+							  select enroll;
 
-							  };
 			var update = updateQuery.FirstOrDefault();
-			//update.Grade = grade;
+			update.Grade = grade;
 			int rowsAffected = db.SaveChanges();
 
 			return Json(new { success = rowsAffected > 0 });
