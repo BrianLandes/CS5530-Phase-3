@@ -152,10 +152,10 @@ namespace LMS.Controllers {
 								aname = a.Name,
 								cname = ac.Name,
 								due = a.DueDate,
-								Submissions = from s in db.Submissions
+								submissions = (from s in db.Submissions
 											  where s.AId == a.AId
-											  group s by s into temp
-											  select temp.Count()
+											  //group s by s into temp
+											  select s).Count()
 							};
 				return Json(query.ToArray());
 			}
@@ -176,10 +176,10 @@ namespace LMS.Controllers {
 								aname = a.Name,
 								cname = ac.Name,
 								due = a.DueDate,
-								Submissions = from s in db.Submissions
+								submissions = (from s in db.Submissions
 											  where s.AId == a.AId
-											  group s by s into temp
-											  select temp.Count()
+											  //group s by s into temp
+											  select s).Count()
 							};
 				return Json(query.ToArray());
 			}

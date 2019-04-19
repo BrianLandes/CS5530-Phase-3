@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Reflection;
+using Xunit;
 
 namespace xUnitTests {
 	public static class Utils {
@@ -48,5 +50,24 @@ namespace xUnitTests {
 		public static T GetValue<T>(dynamic resultValue, string propertyName) {
 			return (T)(resultValue.GetType().GetProperty(propertyName).GetValue(resultValue));
 		}
+
+		public static bool HasField(dynamic resultValue, string propertyName) {
+			try {
+				PropertyInfo myPropInfo = resultValue.GetType().GetProperty(propertyName);
+				return myPropInfo!=null;
+			} catch (NullReferenceException e) {
+				return false;
+			}
+		}
+
+		public static dynamic JsonResultValueAtIndex(JsonResult jsonResult, int index) {
+			dynamic resultValue = jsonResult.Value as dynamic;
+			return resultValue[index] as dynamic;
+		}
+
+		public static void AssertJsonResultIsArrayOfLength(JsonResult jsonResult, int length) {
+			Assert.Equal(length, (jsonResult.Value as dynamic).Length);
+		}
+		
 	}
 }
