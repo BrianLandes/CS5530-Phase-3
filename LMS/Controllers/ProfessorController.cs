@@ -136,7 +136,6 @@ namespace LMS.Controllers {
 		/// or null to return assignments from all categories</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category) {
-			//better way to do this??
 			if (category == null) {
 				var query = from c in db.Courses
 							join c2 in db.Classes
@@ -149,13 +148,14 @@ namespace LMS.Controllers {
 							&& c.Number == num.ToString()
 							&& c2.SemesterSeason == season
 							&& c2.SemesterYear == year
-							//&& ac.Name == category
 							select new {
 								aname = a.Name,
 								cname = ac.Name,
 								due = a.DueDate,
-								// fix this
-								Submissions = 1
+								Submissions = from s in db.Submissions
+											  where s.AId == a.AId
+											  group s by s into temp
+											  select temp.Count()
 							};
 				return Json(query.ToArray());
 			}
@@ -176,8 +176,10 @@ namespace LMS.Controllers {
 								aname = a.Name,
 								cname = ac.Name,
 								due = a.DueDate,
-								// fix this
-								Submissions = 1
+								Submissions = from s in db.Submissions
+											  where s.AId == a.AId
+											  group s by s into temp
+											  select temp.Count()
 							};
 				return Json(query.ToArray());
 			}
@@ -432,8 +434,10 @@ namespace LMS.Controllers {
 						select new {
 							uid = enroll.UId
 						};
-			foreach (var uid in query) {
-				UpdateGrade(subject, num, season, year, uid.ToString());
+			if(query.Count() != 0) {
+				foreach (var uid in query) {
+					UpdateGrade(subject, num, season, year, uid.ToString());
+				}
 			}
 		}
 
@@ -451,6 +455,7 @@ namespace LMS.Controllers {
 				&& classOffering.SemesterSeason == season
 				&& classOffering.SemesterYear == year
 				select new {
+					cID = classOffering.CId,
 					weight = assCat.GradingWeight,
 					assignments = from a in db.Assignments
 								  where a.AcId == assCat.AcId
@@ -483,12 +488,18 @@ namespace LMS.Controllers {
 			double percent = totalPercentage * scalingFactor;
 			string grade = GetLetterGrade(percent);
 
+			//BUG HERE SOMEWHERE!!! 
+			int temp = (int)query.First().cID;
 			//update the enrolled table
 			var updateQuery = from enroll in db.Enrolled
 							  where enroll.UId == uid
-							  select enroll;
+							  && enroll.CId == query.First().cID
+							  select new {
+								  grade = enroll.Grade
+
+							  };
 			var update = updateQuery.FirstOrDefault();
-			update.Grade = grade;
+			//update.Grade = grade;
 			int rowsAffected = db.SaveChanges();
 
 			return Json(new { success = rowsAffected > 0 });
