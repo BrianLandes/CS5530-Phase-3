@@ -136,6 +136,13 @@ namespace LMS.Controllers {
 		/// or null to return assignments from all categories</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category) {
+
+			// TODO: test when category == null
+			// TODO: test when more than one submission
+			// TODO: test when more than one class
+			// TODO: test when more than one assignment category
+			// TODO: test when more than one assignment
+
 			if (category == null) {
 				var query = from c in db.Courses
 							join c2 in db.Classes
@@ -358,6 +365,9 @@ namespace LMS.Controllers {
 		/// <returns>A JSON object containing success = true/false</returns>
 		public IActionResult GradeSubmission(string subject, int num, string season,
 				int year, string category, string asgname, string uid, int score) {
+
+			// TODO: test when submission doesn't exist
+			// TODO: test that the student's overall grade was affected
 
 			var submissionQuery =
 				from course in db.Courses

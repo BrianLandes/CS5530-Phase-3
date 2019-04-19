@@ -36,6 +36,9 @@ namespace LMS.Controllers {
 		/// <param name="subject">The department subject abbreviation (as in "CS")</param>
 		/// <returns>The JSON result</returns>
 		public IActionResult GetCourses(string subject) {
+			// TODO: test when one course
+			// TODO: test when more than one course
+
 			var query =
 				from c in db.Courses
 				where c.Listing == subject
@@ -56,6 +59,9 @@ namespace LMS.Controllers {
 		/// <param name="subject">The department subject abbreviation</param>
 		/// <returns>The JSON result</returns>
 		public IActionResult GetProfessors(string subject) {
+			// TODO: test when no professors
+			// TODO: test when one professor
+			// TODO: test when more than one professors
 			var query =
 				from p in db.Professors
 				where p.WorksIn == subject

@@ -97,6 +97,11 @@ namespace LMS.Controllers {
 		/// <param name="number">The course number, as in 5530</param>
 		/// <returns>The JSON array</returns>
 		public IActionResult GetClassOfferings(string subject, int number) {
+
+			// TODO: test when no courses, no offerings
+			// TODO: test when one course, one offering
+			// TODO: test when more than one course, more than one offering
+
 			var query =
 				from c in db.Classes
 				join c2 in db.Courses
@@ -130,6 +135,10 @@ namespace LMS.Controllers {
 		/// <param name="asgname">The name of the assignment in the category</param>
 		/// <returns>The assignment contents</returns>
 		public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname) {
+
+			// TODO: test trivial
+			// TODO: test when more than one assignment and category
+
 			var query = from c in db.Courses
 						join c2 in db.Classes
 						on c.CatalogId equals c2.CatalogId
@@ -163,6 +172,11 @@ namespace LMS.Controllers {
 		/// <param name="uid">The uid of the student who submitted it</param>
 		/// <returns>The submission text</returns>
 		public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid) {
+
+			// TODO: test trivial when submission exists
+			// TODO: test trivial when submission does not exist
+			// TODO: test when more than one assignment and category
+
 			var query = from c in db.Courses
 						join c2 in db.Classes
 						on c.CatalogId equals c2.CatalogId
