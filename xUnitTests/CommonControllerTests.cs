@@ -170,6 +170,43 @@ namespace xUnitTests {
 			Assert.NotNull(courses);
 			Assert.Single(courses);
 		}
-		
+
+
+		[Fact]
+		public void GetAssignmentContentsTrivialSuccess() {
+			var db = Utils.MakeMockDatabase();
+
+			var controller = MakeController(db);
+
+			uint cid = ProfessorControllerTests.AddCourseAndClass(db);
+
+			AssignmentCategories assCat = new AssignmentCategories {
+				AcId = 1002,
+				Name = "Quizzes",
+				GradingWeight = 50,
+				CId = cid
+			};
+			db.AssignmentCategories.Add(assCat);
+
+			string assignmentContents = "Just leave your head wide open " +
+				"My love comes in doses" +
+				"So if you're nervous you shouldn't be " +
+				"I'll take away your panic";
+
+			Assignments newAssignment = new Assignments {
+				AId = 999,
+				AcId = 1002,
+				Name = "Bonus Quiz",
+				MaxPointValue = 102,
+				DueDate = DateTime.Now,
+				Content = assignmentContents,
+			};
+			db.Assignments.Add(newAssignment);
+
+			db.SaveChanges();
+
+			var contentResult = controller.GetAssignmentContents("CS", 3550, "Spring", 2019, "Quizzes", "Bonus Quiz") as ContentResult;
+			Assert.Equal(assignmentContents, contentResult.Content);
+		}
 	}
 }
