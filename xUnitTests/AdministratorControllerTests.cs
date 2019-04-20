@@ -11,7 +11,7 @@ namespace xUnitTests {
 
 		#region Utilities
 
-		public static AdministratorController MakeController(Team41LMSContext db) {
+		private static AdministratorController MakeController(Team41LMSContext db) {
 			var controller = new AdministratorController();
 			controller.UseLMSContext(db);
 			return controller;

@@ -12,7 +12,7 @@ namespace xUnitTests {
 
 		#region Utilities
 
-		public static CommonController MakeController(Team41LMSContext db) {
+		private static CommonController MakeController(Team41LMSContext db) {
 			CommonController controller = new CommonController();
 			controller.UseLMSContext(db);
 			return controller;

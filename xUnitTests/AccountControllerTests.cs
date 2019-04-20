@@ -10,7 +10,7 @@ namespace xUnitTests {
 
 		#region Utilities
 
-		public static AccountController MakeController(Team41LMSContext db) {
+		private static AccountController MakeController(Team41LMSContext db) {
 			AccountController controller = new AccountController(null, null, null, null);
 			controller.UseLMSContext(db);
 			return controller;
