@@ -378,7 +378,10 @@ namespace LMS.Controllers {
 		/// <returns>A JSON object containing success = true/false</returns>
 		public IActionResult GradeSubmission(string subject, int num, string season,
 				int year, string category, string asgname, string uid, int score) {
-			
+
+			// TODO: test on one assignment no submission 
+			// TODO: test on more than one assignment no submission 
+
 			var submissionQuery =
 				from course in db.Courses
 				join classOffering in db.Classes
@@ -408,7 +411,7 @@ namespace LMS.Controllers {
 
 			UpdateGrade(subject, num, season, year, uid);
 
-			return Json(new { success = rowsAffected > 0 });
+			return Json(new { success = true });
 		}
 
 
@@ -461,7 +464,7 @@ namespace LMS.Controllers {
 			}
 		}
 
-		private IActionResult UpdateGrade(string subject, int num, string season,
+		public void UpdateGrade(string subject, int num, string season,
 				int year, string uid) {
 
 			var query =
@@ -479,23 +482,28 @@ namespace LMS.Controllers {
 					weight = assCat.GradingWeight,
 					assignments = from a in db.Assignments
 								  where a.AcId == assCat.AcId
-								  join s in db.Submissions
-								  on a.AId equals s.AId
+								  from s in (from s in db.Submissions
+											 where a.AId == s.AId
+											 && s.UId == uid
+											 select s).DefaultIfEmpty()
+
 								  select new {
 									  maxpoint = a.MaxPointValue,
-									  earned = s.Score
-								  }
+									  earned = s == null ? 0 : s.Score
+									}
 				};
 
 
 			double totalWeight = 0;
 			double totalPercentage = 0;
-
+			
 			foreach (var category in query) {
-				if (category.assignments.Count() != 0) {
+				
+				if (category.assignments.Any()) {
+					totalWeight += category.weight;
 					double totalEarned = 0;
 					double totalMax = 0;
-					totalWeight += category.weight;
+					
 					foreach (var assignment in category.assignments) {
 						totalEarned += assignment.earned;
 						totalMax += assignment.maxpoint;
@@ -518,10 +526,10 @@ namespace LMS.Controllers {
 			update.Grade = grade;
 			int rowsAffected = db.SaveChanges();
 
-			return Json(new { success = rowsAffected > 0 });
+			//return Json(new { success = rowsAffected > 0 });
 		}
 
-		private string GetLetterGrade(double percentage) {
+		public string GetLetterGrade(double percentage) {
 			if (percentage >= 93) {
 				return "A";
 			}

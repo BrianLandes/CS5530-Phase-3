@@ -373,6 +373,836 @@ namespace xUnitTests {
 		}
 
 		[Fact]
+		public void GradeSubmissionEachGradeRegrading() {
+			var db = Utils.MakeMockDatabase();
+
+			var professorController = MakeController(db);
+			var commonController = CommonControllerTests.MakeController(db);
+			var studentController = StudentControllerTests.MakeController(db);
+			var accountController = AccountControllerTests.MakeController(db);
+			var adminController = AdministratorControllerTests.MakeController(db);
+
+			// The following several commands are just setup
+			string uid = accountController.CreateNewUser("Brian", "Landes", 
+				new DateTime(), "CS", "Student");
+
+			Utils.AssertExecutedSuccessfully( 
+				adminController.CreateCourse("CS", 1286, "Game Playing") );
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateClass("CS", 1286, "Spring", 2019,
+				DateTime.Now, DateTime.Now, "On the moon", "Professor Landes"));
+			Utils.AssertExecutedSuccessfully(
+				studentController.Enroll("CS", 1286, "Spring", 2019, uid));
+
+			int categoryWeightA = 100;
+			Utils.AssertExecutedSuccessfully(
+				professorController.CreateAssignmentCategory("CS", 1286, "Spring", 2019,
+				"Practical Jokes", categoryWeightA));
+			int assignmentMaxPointsA = 100;
+			Utils.AssertExecutedSuccessfully(
+				professorController.CreateAssignment("CS", 1286, "Spring", 2019, 
+				"Practical Jokes", "Use Watergun", assignmentMaxPointsA, DateTime.Now, 
+				"Students are hereby commanded to do unto others as they would do unto themselves if they had a water gun." ) );
+
+			Utils.AssertExecutedSuccessfully(
+			studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 
+				"I did unto others that which I would have done unto myself if I had had a water gun."));
+
+			// try a value for each letter grade
+
+			// ---- This is the actual command being tested -----
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 0));
+			AssertGradeEquals(uid, "E", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 59));
+			AssertGradeEquals(uid, "E", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 62));
+			AssertGradeEquals(uid, "D-", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 65));
+			AssertGradeEquals(uid, "D", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 68));
+			AssertGradeEquals(uid, "D+", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 71));
+			AssertGradeEquals(uid, "C-", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 74));
+			AssertGradeEquals(uid, "C", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 77));
+			AssertGradeEquals(uid, "C+", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 81));
+			AssertGradeEquals(uid, "B-", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 85));
+			AssertGradeEquals(uid, "B", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 88));
+			AssertGradeEquals(uid, "B+", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 91));
+			AssertGradeEquals(uid, "A-", db);
+
+			Utils.AssertExecutedSuccessfully(
+				professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid, 95));
+			AssertGradeEquals(uid, "A", db);
+			
+		}
+
+		[Fact]
+		public void GradeSubmissionAssignmentsWithDifferentPointValues() {
+			var db = Utils.MakeMockDatabase();
+
+			var professorController = MakeController(db);
+			var commonController = CommonControllerTests.MakeController(db);
+			var studentController = StudentControllerTests.MakeController(db);
+			var accountController = AccountControllerTests.MakeController(db);
+			var adminController = AdministratorControllerTests.MakeController(db);
+
+			// The following several commands are just setup
+			string uid = accountController.CreateNewUser("Brian", "Landes",
+				new DateTime(), "CS", "Student");
+
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateCourse("CS", 1286, "Game Playing"));
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateClass("CS", 1286, "Spring", 2019,
+				DateTime.Now, DateTime.Now, "On the moon", "Professor Landes"));
+			Utils.AssertExecutedSuccessfully(
+				studentController.Enroll("CS", 1286, "Spring", 2019, uid));
+
+			int categoryWeightA = 100;
+			Utils.AssertExecutedSuccessfully(
+				professorController.CreateAssignmentCategory("CS", 1286, "Spring", 2019,
+				"Practical Jokes", categoryWeightA));
+			int assignmentMaxPointsZ = 100;
+			Utils.AssertExecutedSuccessfully(
+				professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", assignmentMaxPointsZ, DateTime.Now,
+				"Students are hereby commanded to do unto others as they would do unto themselves if they had a water gun."));
+
+			Utils.AssertExecutedSuccessfully(
+			studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Use Watergun", uid,
+				"I did unto others that which I would have done unto myself if I had had a water gun."));
+
+			int assignmentMaxPointsY = 60;
+			Utils.AssertExecutedSuccessfully(
+				professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Plant Fake Evidence", assignmentMaxPointsY, DateTime.Now,
+				"Do whatever it takes to win the case."));
+
+			Utils.AssertExecutedSuccessfully(
+			studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Plant Fake Evidence", uid,
+				"Planted fingerprint on the wedding ring."));
+
+			int assignmentMaxPointsX = 340;
+			Utils.AssertExecutedSuccessfully(
+				professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Guerrilla Yard Work", assignmentMaxPointsX, DateTime.Now,
+				"Do someones yard work without them knowing."));
+
+			Utils.AssertExecutedSuccessfully(
+			studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+				"Practical Jokes", "Guerrilla Yard Work", uid,
+				"I'll take the zero."));
+
+			{
+				int submissionScoreZ = 0;
+				int submissionScoreY = 60;
+				int submissionScoreX = 340;
+
+				// ---- This is the actual command being tested -----
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Use Watergun", uid, submissionScoreZ));
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Plant Fake Evidence", uid, submissionScoreY));
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Guerrilla Yard Work", uid, submissionScoreX));
+
+				// grade score should be:
+				// earnedPercentageForCategoryA = submissionScores (for each Z, Y, and X) / assignmentMaxPoints (for each Z, Y, and X)
+				// pointsEarnedInCategoryA = categoryWeightA * earnedPercentageForCategoryA
+				// possiblePointsInCategoryA = categoryWeightA
+				// score = pointsEarnedInCategoryA / possiblePointsInCategoryA * 100
+
+				double earnedAssignmentPoints = submissionScoreZ
+					+ submissionScoreY
+					+ submissionScoreX;
+
+				double possibleAssignmentPoints = assignmentMaxPointsZ
+					+ assignmentMaxPointsY
+					+ assignmentMaxPointsX;
+
+				double pointsEarnedInCategoryA =
+					earnedAssignmentPoints / possibleAssignmentPoints * categoryWeightA;
+
+				double score = pointsEarnedInCategoryA / categoryWeightA * 100f;
+
+				string letterGrade = professorController.GetLetterGrade(score);
+
+				AssertGradeEquals(uid, letterGrade, db);
+			}
+
+			{
+				int submissionScoreZ = 100;
+				int submissionScoreY = 60;
+				int submissionScoreX = 340;
+
+				// ---- This is the actual command being tested -----
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Use Watergun", uid, submissionScoreZ));
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Plant Fake Evidence", uid, submissionScoreY));
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Guerrilla Yard Work", uid, submissionScoreX));
+
+				// grade score should be:
+				// earnedPercentageForCategoryA = submissionScores (for each Z, Y, and X) / assignmentMaxPoints (for each Z, Y, and X)
+				// pointsEarnedInCategoryA = categoryWeightA * earnedPercentageForCategoryA
+				// possiblePointsInCategoryA = categoryWeightA
+				// score = pointsEarnedInCategoryA / possiblePointsInCategoryA * 100
+
+				double earnedAssignmentPoints = submissionScoreZ
+					+ submissionScoreY
+					+ submissionScoreX;
+
+				double possibleAssignmentPoints = assignmentMaxPointsZ
+					+ assignmentMaxPointsY
+					+ assignmentMaxPointsX;
+
+				double pointsEarnedInCategoryA =
+					earnedAssignmentPoints / possibleAssignmentPoints * categoryWeightA;
+
+				double score = pointsEarnedInCategoryA / categoryWeightA * 100f;
+
+				string letterGrade = professorController.GetLetterGrade(score);
+
+				AssertGradeEquals(uid, letterGrade, db);
+			}
+
+			{
+				int submissionScoreZ = 80;
+				int submissionScoreY = 20;
+				int submissionScoreX = 140;
+
+				// ---- This is the actual command being tested -----
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Use Watergun", uid, submissionScoreZ));
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Plant Fake Evidence", uid, submissionScoreY));
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					"Practical Jokes", "Guerrilla Yard Work", uid, submissionScoreX));
+
+				// grade score should be:
+				// earnedPercentageForCategoryA = submissionScores (for each Z, Y, and X) / assignmentMaxPoints (for each Z, Y, and X)
+				// pointsEarnedInCategoryA = categoryWeightA * earnedPercentageForCategoryA
+				// possiblePointsInCategoryA = categoryWeightA
+				// score = pointsEarnedInCategoryA / possiblePointsInCategoryA * 100
+
+				double earnedAssignmentPoints = submissionScoreZ
+					+ submissionScoreY
+					+ submissionScoreX;
+
+				double possibleAssignmentPoints = assignmentMaxPointsZ
+					+ assignmentMaxPointsY
+					+ assignmentMaxPointsX;
+
+				double pointsEarnedInCategoryA =
+					earnedAssignmentPoints / possibleAssignmentPoints * categoryWeightA;
+
+				double score = pointsEarnedInCategoryA / categoryWeightA * 100f;
+
+				string letterGrade = professorController.GetLetterGrade(score);
+
+				AssertGradeEquals(uid, letterGrade, db);
+			}
+		}
+
+
+		[Fact]
+		public void GradeSubmissionWeightedAssignmentCategories() {
+			var db = Utils.MakeMockDatabase();
+
+			var professorController = MakeController(db);
+			var commonController = CommonControllerTests.MakeController(db);
+			var studentController = StudentControllerTests.MakeController(db);
+			var accountController = AccountControllerTests.MakeController(db);
+			var adminController = AdministratorControllerTests.MakeController(db);
+
+			// The following several commands are just setup
+			string uid = accountController.CreateNewUser("Brian", "Landes",
+				new DateTime(), "CS", "Student");
+
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateCourse("CS", 1286, "Game Playing"));
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateClass("CS", 1286, "Spring", 2019,
+				DateTime.Now, DateTime.Now, "On the moon", "Professor Landes"));
+			Utils.AssertExecutedSuccessfully(
+				studentController.Enroll("CS", 1286, "Spring", 2019, uid));
+
+			string[] categoryNames = new string[] { "Sucker Punching", "Basket Weaving", "Telling Dirty Jokes" };
+			string categoryName;
+			int[] categoryWeights = new int[] { 10, 100, 500 };
+			
+			for( int i = 0; i < categoryWeights.Length; i ++ ) {
+				categoryName = categoryNames[i];
+				int categoryWeight = categoryWeights[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignmentCategory("CS", 1286, "Spring", 2019,
+					categoryName, categoryWeight));
+			}
+
+			categoryName = categoryNames[0];
+			int[] assignmentWeightsA = new int[] { 200, 12, 4 };
+			int[] submissionScoresA = new int[] { 180, 12, 3 };
+
+			for (int i = 0; i < assignmentWeightsA.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsA[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, "Plant Fake Evidence " + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+
+				Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, "Plant Fake Evidence " + i, uid,
+					"Planted fingerprint on the wedding ring."));
+
+				int submissionScore = submissionScoresA[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					categoryName, "Plant Fake Evidence " + i, uid, submissionScore));
+			}
+
+			categoryName = categoryNames[1];
+			int[] assignmentWeightsB = new int[] { 20, 120, 40, 10 };
+			int[] submissionScoresB = new int[] { 18, 120, 0, 9 };
+
+			for (int i = 0; i < assignmentWeightsB.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsB[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, "Plant Fake Evidence " + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+
+				Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, "Plant Fake Evidence " + i, uid,
+					"Planted fingerprint on the wedding ring."));
+
+				int submissionScore = submissionScoresB[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					categoryName, "Plant Fake Evidence " + i, uid, submissionScore));
+			}
+			categoryName = categoryNames[2];
+			int[] assignmentWeightsC = new int[] { 2, 1 };
+			int[] submissionScoresC = new int[] { 1, 1 };
+
+			for (int i = 0; i < assignmentWeightsC.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsC[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, "Plant Fake Evidence " + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+
+				Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, "Plant Fake Evidence " + i, uid,
+					"Planted fingerprint on the wedding ring."));
+				
+				int submissionScore = submissionScoresC[i];
+				if (submissionScore != 0) {
+					Utils.AssertExecutedSuccessfully(
+						professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+						categoryName, "Plant Fake Evidence " + i, uid, submissionScore));
+				}
+				
+			}
+
+			// grade score should be:
+			// earnedPercentageForCategoryA = submissionScores (for each Z, Y, and X) / assignmentMaxPoints (for each Z, Y, and X)
+			// pointsEarnedInCategoryA = categoryWeightA * earnedPercentageForCategoryA
+			// possiblePoints = categoryWeightA + categoryWeightB + categoryWeightC
+			// score = (pointsEarnedInCategoryA + pointsEarnedInCategoryB + ... )/ possiblePoints * 100
+
+			double totalCategoryWeights = 0;
+			double pointsEarnedInCategoryA = 0;
+			double pointsEarnedInCategoryB = 0;
+			double pointsEarnedInCategoryC = 0;
+
+			{
+				double earnedAssignmentPointsA = 0;
+				double possibleAssignmentPointsA = 0;
+
+				for (int i = 0; i < assignmentWeightsA.Length; i++) {
+					earnedAssignmentPointsA += submissionScoresA[i];
+					possibleAssignmentPointsA += assignmentWeightsA[i];
+				}
+
+				pointsEarnedInCategoryA =
+					earnedAssignmentPointsA / possibleAssignmentPointsA * categoryWeights[0];
+
+				totalCategoryWeights += categoryWeights[0];
+			}
+			{
+				double earnedAssignmentPointsB = 0;
+				double possibleAssignmentPointsB = 0;
+
+				for (int i = 0; i < assignmentWeightsB.Length; i++) {
+					earnedAssignmentPointsB += submissionScoresB[i];
+					possibleAssignmentPointsB += assignmentWeightsB[i];
+				}
+
+				pointsEarnedInCategoryB =
+					earnedAssignmentPointsB / possibleAssignmentPointsB * categoryWeights[1];
+
+				totalCategoryWeights += categoryWeights[1];
+			}
+			{
+				double earnedAssignmentPointsC = 0;
+				double possibleAssignmentPointsC = 0;
+
+				for (int i = 0; i < assignmentWeightsC.Length; i++) {
+					earnedAssignmentPointsC += submissionScoresC[i];
+					possibleAssignmentPointsC += assignmentWeightsC[i];
+				}
+
+				pointsEarnedInCategoryC =
+					earnedAssignmentPointsC / possibleAssignmentPointsC * categoryWeights[2];
+
+				totalCategoryWeights += categoryWeights[2];
+			}
+
+			double score = (pointsEarnedInCategoryA + pointsEarnedInCategoryB + pointsEarnedInCategoryC)
+				/ totalCategoryWeights * 100f;
+
+			string letterGrade = professorController.GetLetterGrade(score);
+
+			AssertGradeEquals(uid, letterGrade, db);
+
+		}
+
+		[Fact]
+		public void GradeSubmissionWeightedAssignmentCategoriesWithMissingSubmissions() {
+			var db = Utils.MakeMockDatabase();
+
+			var professorController = MakeController(db);
+			var commonController = CommonControllerTests.MakeController(db);
+			var studentController = StudentControllerTests.MakeController(db);
+			var accountController = AccountControllerTests.MakeController(db);
+			var adminController = AdministratorControllerTests.MakeController(db);
+
+			// The following several commands are just setup
+			string uid = accountController.CreateNewUser("Brian", "Landes",
+				new DateTime(), "CS", "Student");
+
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateCourse("CS", 1286, "Game Playing"));
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateClass("CS", 1286, "Spring", 2019,
+				DateTime.Now, DateTime.Now, "On the moon", "Professor Landes"));
+			Utils.AssertExecutedSuccessfully(
+				studentController.Enroll("CS", 1286, "Spring", 2019, uid));
+
+			string[] categoryNames = new string[] { "Sucker Punching", "Basket Weaving", "Telling Dirty Jokes" };
+			string categoryName;
+			int[] categoryWeights = new int[] { 200, 10, 500 };
+
+			for (int i = 0; i < categoryWeights.Length; i++) {
+				categoryName = categoryNames[i];
+				int categoryWeight = categoryWeights[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignmentCategory("CS", 1286, "Spring", 2019,
+					categoryName, categoryWeight));
+			}
+
+			categoryName = categoryNames[0];
+			int[] assignmentWeightsA = new int[] { 200, 12, 400 };
+			int[] submissionScoresA = new int[] { 0, 12, 390 };
+
+			for (int i = 0; i < assignmentWeightsA.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsA[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+
+				int submissionScore = submissionScoresA[i];
+				if (submissionScore != 0) {
+					Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid,
+					"Planted fingerprint on the wedding ring."));
+
+				
+					Utils.AssertExecutedSuccessfully(
+						professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+						categoryName, categoryName + i, uid, submissionScore));
+				}
+			}
+
+			categoryName = categoryNames[1];
+			int[] assignmentWeightsB = new int[] { 20, 120, 400, 10 };
+			int[] submissionScoresB = new int[] { 0, 0, 0, 0 };
+
+			for (int i = 0; i < assignmentWeightsB.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsB[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+				int submissionScore = submissionScoresB[i];
+				if (submissionScore != 0) {
+					Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid,
+					"Planted fingerprint on the wedding ring."));
+
+				
+					Utils.AssertExecutedSuccessfully(
+						professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+						categoryName, categoryName + i, uid, submissionScore));
+				}
+			}
+			categoryName = categoryNames[2];
+			int[] assignmentWeightsC = new int[] { 2, 1 };
+			int[] submissionScoresC = new int[] { 2, 1 };
+
+			for (int i = 0; i < assignmentWeightsC.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsC[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+
+				int submissionScore = submissionScoresC[i];
+				if (submissionScore != 0) {
+					Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid,
+					"Planted fingerprint on the wedding ring."));
+
+				
+					Utils.AssertExecutedSuccessfully(
+						professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+						categoryName, categoryName + i, uid, submissionScore));
+				}
+
+			}
+
+			// grade score should be:
+			// earnedPercentageForCategoryA = submissionScores (for each Z, Y, and X) / assignmentMaxPoints (for each Z, Y, and X)
+			// pointsEarnedInCategoryA = categoryWeightA * earnedPercentageForCategoryA
+			// possiblePoints = categoryWeightA + categoryWeightB + categoryWeightC
+			// score = (pointsEarnedInCategoryA + pointsEarnedInCategoryB + ... )/ possiblePoints * 100
+
+			double totalCategoryWeights = 0;
+			double pointsEarnedInCategoryA = 0;
+			double pointsEarnedInCategoryB = 0;
+			double pointsEarnedInCategoryC = 0;
+
+			{
+				double earnedAssignmentPointsA = 0;
+				double possibleAssignmentPointsA = 0;
+
+				for (int i = 0; i < assignmentWeightsA.Length; i++) {
+					earnedAssignmentPointsA += submissionScoresA[i];
+					possibleAssignmentPointsA += assignmentWeightsA[i];
+				}
+
+				pointsEarnedInCategoryA =
+					earnedAssignmentPointsA / possibleAssignmentPointsA * categoryWeights[0];
+
+				totalCategoryWeights += categoryWeights[0];
+			}
+			{
+				double earnedAssignmentPointsB = 0;
+				double possibleAssignmentPointsB = 0;
+
+				for (int i = 0; i < assignmentWeightsB.Length; i++) {
+					earnedAssignmentPointsB += submissionScoresB[i];
+					possibleAssignmentPointsB += assignmentWeightsB[i];
+				}
+
+				pointsEarnedInCategoryB =
+					earnedAssignmentPointsB / possibleAssignmentPointsB * categoryWeights[1];
+
+				totalCategoryWeights += categoryWeights[1];
+			}
+			{
+				double earnedAssignmentPointsC = 0;
+				double possibleAssignmentPointsC = 0;
+
+				for (int i = 0; i < assignmentWeightsC.Length; i++) {
+					earnedAssignmentPointsC += submissionScoresC[i];
+					possibleAssignmentPointsC += assignmentWeightsC[i];
+				}
+
+				pointsEarnedInCategoryC =
+					earnedAssignmentPointsC / possibleAssignmentPointsC * categoryWeights[2];
+
+				totalCategoryWeights += categoryWeights[2];
+			}
+
+			double score = (pointsEarnedInCategoryA + pointsEarnedInCategoryB + pointsEarnedInCategoryC)
+				/ totalCategoryWeights * 100f;
+
+			string letterGrade = professorController.GetLetterGrade(score);
+
+			AssertGradeEquals(uid, letterGrade, db);
+
+		}
+
+
+		[Fact]
+		public void GradeSubmissionWeightedAssignmentCategoriesWithMissingSubmissionsAndOtherStudents() {
+			var db = Utils.MakeMockDatabase();
+
+			var professorController = MakeController(db);
+			var commonController = CommonControllerTests.MakeController(db);
+			var studentController = StudentControllerTests.MakeController(db);
+			var accountController = AccountControllerTests.MakeController(db);
+			var adminController = AdministratorControllerTests.MakeController(db);
+
+			// The following several commands are just setup
+			string uid = accountController.CreateNewUser("Brian", "Landes",
+				new DateTime(), "CS", "Student");
+			string uid2 = accountController.CreateNewUser("Chloe", "Josien",
+				new DateTime(), "CS", "Student");
+
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateCourse("CS", 1286, "Game Playing"));
+			Utils.AssertExecutedSuccessfully(
+				adminController.CreateClass("CS", 1286, "Spring", 2019,
+				DateTime.Now, DateTime.Now, "On the moon", "Professor Landes"));
+			Utils.AssertExecutedSuccessfully(
+				studentController.Enroll("CS", 1286, "Spring", 2019, uid));
+			Utils.AssertExecutedSuccessfully(
+				studentController.Enroll("CS", 1286, "Spring", 2019, uid2));
+
+			string[] categoryNames = new string[] { "Sucker Punching", "Basket Weaving", "Telling Dirty Jokes" };
+			string categoryName;
+			int[] categoryWeights = new int[] { 200, 10, 500 };
+
+			for (int i = 0; i < categoryWeights.Length; i++) {
+				categoryName = categoryNames[i];
+				int categoryWeight = categoryWeights[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignmentCategory("CS", 1286, "Spring", 2019,
+					categoryName, categoryWeight));
+			}
+
+			categoryName = categoryNames[0];
+			int[] assignmentWeightsA = new int[] { 200, 12, 400 };
+			int[] submissionScoresA = new int[] { 0, 12, 390 };
+
+			for (int i = 0; i < assignmentWeightsA.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsA[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+
+				int submissionScore = submissionScoresA[i];
+				if (submissionScore != 0) {
+					Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid,
+					"Planted fingerprint on the wedding ring."));
+
+
+					Utils.AssertExecutedSuccessfully(
+						professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+						categoryName, categoryName + i, uid, submissionScore));
+				}
+
+				Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid2,
+					"Planted fingerprint on the wedding ring."));
+
+
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid2, assignmentMaxPoints));
+			}
+
+			categoryName = categoryNames[1];
+			int[] assignmentWeightsB = new int[] { 20, 120, 400, 10 };
+			int[] submissionScoresB = new int[] { 0, 0, 0, 0 };
+
+			for (int i = 0; i < assignmentWeightsB.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsB[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+				int submissionScore = submissionScoresB[i];
+				if (submissionScore != 0) {
+					Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid,
+					"Planted fingerprint on the wedding ring."));
+
+
+					Utils.AssertExecutedSuccessfully(
+						professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+						categoryName, categoryName + i, uid, submissionScore));
+				}
+
+				Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid2,
+					"Planted fingerprint on the wedding ring."));
+
+
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid2, assignmentMaxPoints));
+			}
+			categoryName = categoryNames[2];
+			int[] assignmentWeightsC = new int[] { 2, 1 };
+			int[] submissionScoresC = new int[] { 2, 1 };
+
+			for (int i = 0; i < assignmentWeightsC.Length; i++) {
+				int assignmentMaxPoints = assignmentWeightsC[i];
+				Utils.AssertExecutedSuccessfully(
+					professorController.CreateAssignment("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, assignmentMaxPoints, DateTime.Now,
+					"Do whatever it takes to win the case."));
+
+				int submissionScore = submissionScoresC[i];
+				if (submissionScore != 0) {
+					Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid,
+					"Planted fingerprint on the wedding ring."));
+
+
+					Utils.AssertExecutedSuccessfully(
+						professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+						categoryName, categoryName + i, uid, submissionScore));
+				}
+
+				Utils.AssertExecutedSuccessfully(
+					studentController.SubmitAssignmentText("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid2,
+					"Planted fingerprint on the wedding ring."));
+
+
+				Utils.AssertExecutedSuccessfully(
+					professorController.GradeSubmission("CS", 1286, "Spring", 2019,
+					categoryName, categoryName + i, uid2, assignmentMaxPoints));
+
+			}
+
+			// grade score should be:
+			// earnedPercentageForCategoryA = submissionScores (for each Z, Y, and X) / assignmentMaxPoints (for each Z, Y, and X)
+			// pointsEarnedInCategoryA = categoryWeightA * earnedPercentageForCategoryA
+			// possiblePoints = categoryWeightA + categoryWeightB + categoryWeightC
+			// score = (pointsEarnedInCategoryA + pointsEarnedInCategoryB + ... )/ possiblePoints * 100
+
+			double totalCategoryWeights = 0;
+			double pointsEarnedInCategoryA = 0;
+			double pointsEarnedInCategoryB = 0;
+			double pointsEarnedInCategoryC = 0;
+
+			{
+				double earnedAssignmentPointsA = 0;
+				double possibleAssignmentPointsA = 0;
+
+				for (int i = 0; i < assignmentWeightsA.Length; i++) {
+					earnedAssignmentPointsA += submissionScoresA[i];
+					possibleAssignmentPointsA += assignmentWeightsA[i];
+				}
+
+				pointsEarnedInCategoryA =
+					earnedAssignmentPointsA / possibleAssignmentPointsA * categoryWeights[0];
+
+				totalCategoryWeights += categoryWeights[0];
+			}
+			{
+				double earnedAssignmentPointsB = 0;
+				double possibleAssignmentPointsB = 0;
+
+				for (int i = 0; i < assignmentWeightsB.Length; i++) {
+					earnedAssignmentPointsB += submissionScoresB[i];
+					possibleAssignmentPointsB += assignmentWeightsB[i];
+				}
+
+				pointsEarnedInCategoryB =
+					earnedAssignmentPointsB / possibleAssignmentPointsB * categoryWeights[1];
+
+				totalCategoryWeights += categoryWeights[1];
+			}
+			{
+				double earnedAssignmentPointsC = 0;
+				double possibleAssignmentPointsC = 0;
+
+				for (int i = 0; i < assignmentWeightsC.Length; i++) {
+					earnedAssignmentPointsC += submissionScoresC[i];
+					possibleAssignmentPointsC += assignmentWeightsC[i];
+				}
+
+				pointsEarnedInCategoryC =
+					earnedAssignmentPointsC / possibleAssignmentPointsC * categoryWeights[2];
+
+				totalCategoryWeights += categoryWeights[2];
+			}
+
+			double score = (pointsEarnedInCategoryA + pointsEarnedInCategoryB + pointsEarnedInCategoryC)
+				/ totalCategoryWeights * 100f;
+
+			string letterGrade = professorController.GetLetterGrade(score);
+
+			AssertGradeEquals(uid, letterGrade, db);
+			AssertGradeEquals(uid2, "A", db);
+		}
+
+		[Fact]
 		public void GetStudentsInClassOneStudent() {
 			var db = Utils.MakeMockDatabase();
 
