@@ -481,6 +481,7 @@ namespace LMS.Controllers {
 								  where a.AcId == assCat.AcId
 								  join s in db.Submissions
 								  on a.AId equals s.AId
+								  where s.UId == uid
 								  select new {
 									  maxpoint = a.MaxPointValue,
 									  earned = s.Score
