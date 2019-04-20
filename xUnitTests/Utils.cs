@@ -69,5 +69,9 @@ namespace xUnitTests {
 			Assert.Equal(length, (jsonResult.Value as dynamic).Length);
 		}
 		
+		public static void AssertExecutedSuccessfully( IActionResult controllerCommand ) {
+			JsonResult jsonResult = controllerCommand as JsonResult;
+			Assert.True(ResultSuccessValue(jsonResult));
+		}
 	}
 }
